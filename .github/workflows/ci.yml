@@ -87,7 +87,7 @@ jobs:
           const expected = JSON.parse(fs.readFileSync(process.argv[4], 'utf8')).version;
           assert.equal(version, expected);
           assert.equal(catalog.tools.length, 21);
-          assert.equal(new Set(catalog.tools.map((tool) => tool.name)).size, 24);
+          assert.equal(new Set(catalog.tools.map((tool) => tool.name)).size, 21);
           const logTool = catalog.tools.find((tool) => tool.name === 'ariadne_job_log');
           assert.ok(logTool.parameters.includes('cursor'));
           assert.ok(logTool.parameters.includes('view'));
