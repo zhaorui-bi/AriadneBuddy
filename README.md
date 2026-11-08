@@ -39,7 +39,7 @@
 
 ---
 
-## What this is
+## <img src="./docs/images/icons/discovery.svg" width="22" height="22" alt="" align="top"> What this is
 
 **AriadneBuddy** wraps the published
 [Ariadne](https://github.com/zhaorui-bi/Ariadne) platform — the four-stage,
@@ -66,7 +66,7 @@ full terminal TUI, a local web workbench, and an Electron desktop app, in the
 Ariadne visual language: parchment, aegean blue, verdigris, gold, terracotta,
 and a single Greek-key meander under the goddess mark.
 
-## The closed loop
+## <img src="./docs/images/icons/ring.svg" width="22" height="22" alt="" align="top"> The closed loop
 
 ```
 readiness → literature → hypothesis ──approve──→ pathway
@@ -102,7 +102,7 @@ torch/transformers the loop still runs behind an explicit
 `proceed_without_esm` waiver, with nominations carried by HMM +
 feature-space evidence as `conditional_nomination`.
 
-## The 21 agent tools
+## <img src="./docs/images/icons/genome.svg" width="22" height="22" alt="" align="top"> The 21 agent tools
 
 | Group | Tools |
 | --- | --- |
@@ -110,7 +110,7 @@ feature-space evidence as `conditional_nomination`.
 | Durable jobs | `ariadne_job_list` · `ariadne_job_status` · `ariadne_job_manifest` · `ariadne_job_log` · `ariadne_job_artifacts` · `ariadne_job_cancel` |
 | Research controller | `ariadne_research_create` · `ariadne_research_status` · `ariadne_research_list` · `ariadne_research_advance` · `ariadne_research_respond` · `ariadne_research_cancel` |
 
-## A nomination request
+## <img src="./docs/images/icons/target.svg" width="22" height="22" alt="" align="top"> A nomination request
 
 ```json
 {
@@ -127,7 +127,7 @@ feature-space evidence as `conditional_nomination`.
 Runnable cases live in [`examples/cases/`](./examples/cases/): a standard CeeSs
 screen, a relaxed exploratory screen, and a pathway-first TPS inventory.
 
-## Install
+## <img src="./docs/images/icons/install.svg" width="22" height="22" alt="" align="top"> Install
 
 **Prerequisites** — Node.js ≥ 24.15, npm, pnpm 12; Python 3.10+ with an
 [ariadne-tps](https://github.com/zhaorui-bi/Ariadne) checkout (`pyhmmer,
@@ -143,7 +143,7 @@ npm run setup                                          # install + build + brand
 ./bin/ariadnebuddy doctor --probe                      # one-shot health check
 ```
 
-## Use
+## <img src="./docs/images/icons/flask.svg" width="22" height="22" alt="" align="top"> Use
 
 ```bash
 ./bin/ariadnebuddy web        # Greek/Roman web workbench → http://127.0.0.1:58627
@@ -163,7 +163,7 @@ node engine/apps/ariadne-buddy/scripts/run-real-engine-demo.mjs /path/to/Ariadne
 drives the entire loop against the real pyhmmer/sklearn engines and prints
 the nominated candidates with their evidence.
 
-## Documentation
+## <img src="./docs/images/icons/book.svg" width="22" height="22" alt="" align="top"> Documentation
 
 | Doc | Contents |
 | --- | --- |
@@ -174,14 +174,14 @@ the nominated candidates with their evidence.
 | [FAQ](./docs/FAQ.md) · [Troubleshooting](./docs/TROUBLESHOOTING.md) · [Release](./docs/RELEASE.md) | answers, fixes, shipping |
 | 中文文档 | [快速上手](./docs/zh-CN/QUICKSTART.md) · [常见问题](./docs/zh-CN/FAQ.md) · [故障排查](./docs/zh-CN/TROUBLESHOOTING.md) · [工作流](./docs/zh-CN/DOMAIN_WORKFLOW.md) |
 
-## Verification
+## <img src="./docs/images/icons/filter.svg" width="22" height="22" alt="" align="top"> Verification
 
 Everything is gated locally by `npm run check` — lint, typecheck,
 coverage-threshold tests, the Python adapter suite, packaging, desktop
 startup, TUI regression, and the MCP / research / web smokes; the research
 smoke drives the entire loop to a validated handoff.
 
-## Citation
+## <img src="./docs/images/icons/paper.svg" width="22" height="22" alt="" align="top"> Citation
 
 If AriadneBuddy contributes to your research, please cite the accompanying
 *Journal of Natural Products* article (the Ariadne paper):
@@ -209,7 +209,7 @@ Please also report the AriadneBuddy version (`ariadnebuddy --version`), the
 ariadne-tps revision, reference snapshot, HMM libraries, and ESM model used.
 See [CITATION.cff](./CITATION.cff) for this software's own record.
 
-## License & acknowledgements
+## <img src="./docs/images/icons/output.svg" width="22" height="22" alt="" align="top"> License & acknowledgements
 
 MIT. Built on the [OpenAqua-Harness](https://github.com/zhaorui-bi/OpenAqua-Harness)
 template, powered by the vendored [Kimi Code](https://github.com/MoonshotAI/kimi-code)

@@ -39,7 +39,7 @@
 
 ---
 
-## 这是什么
+## <img src="./docs/images/icons/discovery.svg" width="22" height="22" alt="" align="top"> 这是什么
 
 **AriadneBuddy** 把已发表的 [Ariadne](https://github.com/zhaorui-bi/Ariadne)
 平台——*J. Nat. Prod.* 2026 报道的珊瑚 cembrene 类合酶（CeeSs）背后的四阶段、
@@ -58,7 +58,7 @@
 完整终端 TUI、本地 Web 工作台与 Electron 桌面应用，视觉采用 Ariadne 设计
 语言：羊皮纸、爱琴海蓝、铜绿、鎏金、陶瓦红，以及女神线稿下的一条希腊回纹。
 
-## 科学闭环
+## <img src="./docs/images/icons/ring.svg" width="22" height="22" alt="" align="top"> 科学闭环
 
 ```
 就绪检查 → 文献调研 → 假说生成 ──审批──→ 途径重构
@@ -92,7 +92,7 @@ sha256 指纹），控制器在消费任何阶段产物前都会重新校验。�
 torch/transformers 时闭环照常运行——显式 `proceed_without_esm` 豁免后，提名由
 HMM + 特征空间证据承载，结果为 `conditional_nomination`。
 
-## 21 个智能体工具
+## <img src="./docs/images/icons/genome.svg" width="22" height="22" alt="" align="top"> 21 个智能体工具
 
 | 分组 | 工具 |
 | --- | --- |
@@ -100,7 +100,7 @@ HMM + 特征空间证据承载，结果为 `conditional_nomination`。
 | 持久作业 | `ariadne_job_list` · `ariadne_job_status` · `ariadne_job_manifest` · `ariadne_job_log` · `ariadne_job_artifacts` · `ariadne_job_cancel` |
 | 研究控制器 | `ariadne_research_create` · `ariadne_research_status` · `ariadne_research_list` · `ariadne_research_advance` · `ariadne_research_respond` · `ariadne_research_cancel` |
 
-## 提名请求示例
+## <img src="./docs/images/icons/target.svg" width="22" height="22" alt="" align="top"> 提名请求示例
 
 ```json
 {
@@ -117,7 +117,7 @@ HMM + 特征空间证据承载，结果为 `conditional_nomination`。
 完整可运行案例见 [`examples/cases/`](./examples/cases/)：标准 CeeSs 筛选、
 宽松探索筛选、途径优先的 TPS 普查。
 
-## 安装
+## <img src="./docs/images/icons/install.svg" width="22" height="22" alt="" align="top"> 安装
 
 **前置条件** —— Node.js ≥ 24.15、npm、pnpm 12；Python 3.10+ 与
 [ariadne-tps](https://github.com/zhaorui-bi/Ariadne) 检出（`pyhmmer、
@@ -133,7 +133,7 @@ npm run setup                                          # 安装 + 构建 + 品�
 ./bin/ariadnebuddy doctor --probe                      # 一键健康检查
 ```
 
-## 使用
+## <img src="./docs/images/icons/flask.svg" width="22" height="22" alt="" align="top"> 使用
 
 ```bash
 ./bin/ariadnebuddy web        # 古希腊风格 Web 工作台 → http://127.0.0.1:58627
@@ -152,7 +152,7 @@ node engine/apps/ariadne-buddy/scripts/run-real-engine-demo.mjs /path/to/Ariadne
 
 会用真实 pyhmmer/sklearn 引擎跑完整闭环，并打印提名候选及其证据。
 
-## 文档
+## <img src="./docs/images/icons/book.svg" width="22" height="22" alt="" align="top"> 文档
 
 | 文档 | 内容 |
 | --- | --- |
@@ -163,13 +163,13 @@ node engine/apps/ariadne-buddy/scripts/run-real-engine-demo.mjs /path/to/Ariadne
 | [常见问题](./docs/zh-CN/FAQ.md) · [故障排查](./docs/zh-CN/TROUBLESHOOTING.md) · [发布流程](./docs/RELEASE.md) | 解答、修复、发版 |
 | English | [Quick start](./docs/QUICKSTART.md) · [FAQ](./docs/FAQ.md) · [Workflow](./docs/SCIENTIFIC_WORKFLOWS.md) |
 
-## 验证
+## <img src="./docs/images/icons/filter.svg" width="22" height="22" alt="" align="top"> 验证
 
 一切由本地 `npm run check` 把关——lint、类型检查、覆盖率门禁测试、Python
 适配器套件、打包、桌面启动、TUI 回归，以及 MCP / 研究 / Web 冒烟；研究冒烟
 驱动整个闭环直至验证交接。
 
-## 引用
+## <img src="./docs/images/icons/paper.svg" width="22" height="22" alt="" align="top"> 引用
 
 若 AriadneBuddy 对你的研究有帮助，请引用随附的 *Journal of Natural Products*
 论文（即 Ariadne 论文）：
@@ -197,7 +197,7 @@ node engine/apps/ariadne-buddy/scripts/run-real-engine-demo.mjs /path/to/Ariadne
 版本、参考数据快照、HMM 库与 ESM 模型。本软件自身的记录见
 [CITATION.cff](./CITATION.cff)。
 
-## 许可与致谢
+## <img src="./docs/images/icons/output.svg" width="22" height="22" alt="" align="top"> 许可与致谢
 
 MIT。基于 [OpenAqua-Harness](https://github.com/zhaorui-bi/OpenAqua-Harness)
 模板构建，由内置的 [Kimi Code](https://github.com/MoonshotAI/kimi-code)
