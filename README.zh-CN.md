@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./build/logo-256.png" alt="AriadneBuddy — Ariadne 女神线稿徽标" width="128">
+  <img src="./docs/logo.svg" alt="Ariadne — 官方完整版徽标，女神线稿与字标" width="440">
 </p>
 
 <p align="center">

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./build/logo-256.png" alt="AriadneBuddy — the Ariadne goddess mark" width="128">
+  <img src="./docs/logo.svg" alt="Ariadne — the official full logo, goddess mark and wordmark" width="440">
 </p>
 
 <p align="center">
