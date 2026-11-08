@@ -3,7 +3,7 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
-declare const ARIADNE: string | undefined;
+declare const __ARIADNE_VERSION__: string | undefined;
 
 let cachedPackageRoot: string | undefined;
 let cachedPackageVersion: string | undefined;
@@ -61,7 +61,7 @@ export function packageVersion(): string {
     cachedPackageVersion = (JSON.parse(readFileSync(manifest, 'utf8')) as { version: string }).version;
   } catch {
     cachedPackageVersion =
-      typeof ARIADNE === 'string' ? ARIADNE : '0.0.0-unknown';
+      typeof __ARIADNE_VERSION__ === 'string' ? __ARIADNE_VERSION__ : '0.0.0-unknown';
   }
   return cachedPackageVersion;
 }
