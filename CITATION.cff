@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use AriadneBuddy in research, cite this software, the Ariadne engine paper (Wang et al., J. Nat. Prod. 2026, DOI 10.1021/acs.jnatprod.6c00686), and report the exact engine, reference-data, HMM-library, and ESM model versions used."
+type: software
+title: "AriadneBuddy"
+version: "0.1.0-beta.1"
+date-released: "2026-11-08"
+authors:
+  - name: "AriadneBuddy contributors"
+repository-code: "https://github.com/zhaorui-bi/AriadneBuddy"
+url: "https://github.com/zhaorui-bi/AriadneBuddy"
+license: MIT
+keywords:
+  - natural products
+  - genome mining
+  - terpene synthases
+  - scientific agents
+  - multi-agent workflows
+  - MCP
+  - Electron

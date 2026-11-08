@@ -1,0 +1,175 @@
+{
+  "name": "ariadne-buddy",
+  "version": "0.1.0-beta.1",
+  "private": true,
+  "description": "AriadneBuddy — a multi-agent scientific-discovery workbench (literature review, hypothesis generation, pathway reconstruction, deterministic candidate nomination) with CLI, Web, and Electron desktop interfaces, built on the Ariadne engines and the open-source Kimi Code engine",
+  "main": "main.js",
+  "license": "MIT",
+  "author": "zhaorui-bi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhaorui-bi/AriadneBuddy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zhaorui-bi/AriadneBuddy/issues"
+  },
+  "homepage": "https://github.com/zhaorui-bi/AriadneBuddy#readme",
+  "engines": {
+    "node": ">=24.15.0"
+  },
+  "packageManager": "npm@12.0.2",
+  "scripts": {
+    "start": "electron .",
+    "postinstall": "node node_modules/electron/install.js && node scripts/patch-packaging-dependencies.mjs",
+    "cli": "node engine/apps/ariadne-buddy/dist/cli.mjs",
+    "setup": "pnpm -C engine install --frozen-lockfile && npm run build",
+    "sync:web": "node engine/apps/ariadne-buddy/scripts/sync-web-ui.mjs",
+    "build": "npm run build:engine && npm run build:tui",
+    "build:engine": "pnpm -C engine --filter ariadne-buddy build",
+    "build:tui": "pnpm -C engine --filter @moonshot-ai/kimi-code build",
+    "lint": "npm run lint:desktop && npm run lint:workers && pnpm -C engine exec oxlint apps/ariadne-buddy/src apps/ariadne-buddy/test apps/ariadne-buddy/scripts --type-aware",
+    "lint:desktop": "engine/node_modules/.bin/oxlint main.js scripts/audit-runtime.mjs scripts/check-adapter.mjs scripts/check-repository.mjs scripts/check-tui.mjs scripts/generate-checksums.mjs scripts/generate-sbom.mjs scripts/generate-third-party-notices.mjs scripts/smoke-desktop.mjs scripts/check-packaging.mjs scripts/patch-packaging-dependencies.mjs --deny-warnings",
+    "lint:workers": "pnpm -C engine exec oxlint packages/kap-server/src/search/worker/host.ts packages/minidb/src/worker/text-build.ts --type-aware --deny-warnings",
+    "audit:runtime": "node scripts/audit-runtime.mjs",
+    "licenses": "node scripts/generate-third-party-notices.mjs && node scripts/generate-sbom.mjs",
+    "sbom": "node scripts/generate-sbom.mjs",
+    "checksums": "node scripts/generate-checksums.mjs",
+    "check:licenses": "node scripts/generate-third-party-notices.mjs --check && node scripts/generate-sbom.mjs --check",
+    "check:repo": "node scripts/check-repository.mjs",
+    "typecheck": "pnpm -C engine --filter ariadne-buddy typecheck",
+    "test": "pnpm -C engine --filter ariadne-buddy test:coverage",
+    "test:adapter": "node scripts/check-adapter.mjs",
+    "test:desktop-startup": "node scripts/smoke-desktop.mjs --check-startup",
+    "test:packaging": "node scripts/check-packaging.mjs",
+    "check:tui": "node scripts/check-tui.mjs",
+    "smoke:mcp": "npm run build:engine && node engine/apps/ariadne-buddy/scripts/smoke-mcp.mjs",
+    "smoke:research": "node engine/apps/ariadne-buddy/scripts/smoke-research.mjs",
+    "smoke:web": "node engine/apps/ariadne-buddy/scripts/smoke-web.mjs",
+    "smoke:desktop": "node scripts/smoke-desktop.mjs",
+    "check": "node --check main.js && node --check scripts/check-packaging.mjs && node --check scripts/patch-packaging-dependencies.mjs && node --check scripts/audit-runtime.mjs && node --check scripts/check-adapter.mjs && node --check scripts/check-repository.mjs && node --check scripts/check-tui.mjs && node --check scripts/generate-checksums.mjs && node --check scripts/generate-sbom.mjs && node --check scripts/generate-third-party-notices.mjs && node --check scripts/smoke-desktop.mjs && node --check engine/apps/ariadne-buddy/scripts/smoke-web.mjs && node --check engine/apps/ariadne-buddy/scripts/smoke-research.mjs && npm run lint && npm run typecheck && npm test && npm run test:adapter && npm run test:desktop-startup && npm run test:packaging && npm run check:tui && npm run smoke:mcp && npm run smoke:research && npm run smoke:web && npm run check:licenses && npm run check:repo",
+    "release:check": "npm run check && npm audit --audit-level=low && npm run audit:runtime",
+    "clean:dist": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "prepack": "npm run clean:dist && npm run build:engine",
+    "pack": "electron-builder --dir",
+    "predist": "npm run clean:dist && npm run build:engine",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "@fontsource-variable/cormorant-garamond": "^5.3.0",
+    "@fontsource-variable/noto-serif-sc": "^5.3.1",
+    "electron": "^44.9.1",
+    "electron-builder": "^26.15.3",
+    "pnpm": "12.4.1"
+  },
+  "build": {
+    "appId": "com.ariadne.buddy",
+    "productName": "AriadneBuddy",
+    "artifactName": "AriadneBuddy-${version}-${os}-${arch}.${ext}",
+    "asar": true,
+    "electronLanguages": [
+      "en",
+      "zh_CN",
+      "zh_TW"
+    ],
+    "files": [
+      "main.js",
+      "LICENSE"
+    ],
+    "extraResources": [
+      {
+        "from": "engine/apps/ariadne-buddy/dist",
+        "to": "harness/dist"
+      },
+      {
+        "from": "engine/apps/ariadne-buddy/skills",
+        "to": "harness/skills"
+      },
+      {
+        "from": "engine/apps/ariadne-buddy/backend",
+        "to": "harness/backend",
+        "filter": [
+          "**/*",
+          "!**/__pycache__/**",
+          "!**/*.py[cod]"
+        ]
+      },
+      {
+        "from": "engine/apps/ariadne-buddy/web-ui",
+        "to": "web-ui"
+      },
+      {
+        "from": "build/logo-256.png",
+        "to": "brand/logo.png"
+      },
+      {
+        "from": "LICENSE",
+        "to": "licenses/ARIADNE_BUDDY_LICENSE"
+      },
+      {
+        "from": "engine/LICENSE",
+        "to": "licenses/KIMI_CODE_LICENSE"
+      },
+      {
+        "from": "licenses/Ariadne-MIT.txt",
+        "to": "licenses/ARIADNE_UPSTREAM_LICENSE"
+      },
+      {
+        "from": "licenses/THIRD_PARTY_NOTICES.md",
+        "to": "licenses/THIRD_PARTY_NOTICES.md"
+      },
+      {
+        "from": "licenses/SBOM.spdx.json",
+        "to": "licenses/SBOM.spdx.json"
+      },
+      {
+        "from": "node_modules/electron/dist/LICENSE",
+        "to": "licenses/ELECTRON_LICENSE"
+      },
+      {
+        "from": "node_modules/electron/dist/LICENSES.chromium.html",
+        "to": "licenses/ELECTRON_THIRD_PARTY_NOTICES.html"
+      }
+    ],
+    "mac": {
+      "icon": "build/icon.icns",
+      "category": "public.app-category.education",
+      "hardenedRuntime": true,
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "linux": {
+      "icon": "build/icon.png",
+      "category": "Science",
+      "target": [
+        "AppImage",
+        "tar.gz"
+      ]
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    }
+  },
+  "overrides": {
+    "@electron/get": "5.1.0",
+    "@electron/asar": {
+      ".": "4.3.1",
+      "glob": "14.0.3"
+    },
+    "@electron/universal": "3.0.6",
+    "minimatch": "11.0.2",
+    "rimraf": {
+      ".": "6.1.3",
+      "glob": "14.0.3"
+    }
+  },
+  "allowScripts": {
+    "electron-winstaller@5.4.0": true,
+    "pnpm@12.4.1": true
+  }
+}

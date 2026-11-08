@@ -1,0 +1,15 @@
+{
+  "target_class": "cembrene-class TPS (CeeSs)",
+  "input_proteins": ["input/all_tps.fasta"],
+  "query_hmm": "input/query.hmm",
+  "reference_dir": "input/references",
+  "tps_workbook": "TPS.xlsx",
+  "thresholds": {
+    "min_score": 0,
+    "max_evalue": 0.01,
+    "min_length": 280,
+    "ceess_threshold": 0.85,
+    "top_k": 8
+  },
+  "context": "Exploratory screen: relax thresholds to surface low-similarity CeeSs candidates for the iteration loop; every nomination must still pass the deterministic audit."
+}

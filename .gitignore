@@ -1,0 +1,38 @@
+.DS_Store
+Thumbs.db
+node_modules/
+dist/
+.env
+.env.*
+*.pem
+*.key
+*.p8
+*.p12
+*.pfx
+
+# Local runtime data may contain API keys, credentials, sessions and logs.
+/.ariadne/
+/.kimi-code/
+/ariadne-data/
+/kimi-data/
+**/ariadne-jobs/
+/mcp.json
+/server.token
+
+# Local build, test, and scratch output.
+/.tmp/
+/.cache/
+coverage/
+/build/icon.iconset/
+*.log
+__pycache__/
+*.py[cod]
+
+# Branded web UI is generated from apps/kimi-code/dist-web by sync-web-ui.mjs.
+engine/apps/*/web-ui/
+
+# Local AI-tool session state (never part of the product).
+.v2c/
+.mimosa/
+.video_agent/
+.zcode/

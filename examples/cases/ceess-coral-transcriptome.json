@@ -1,0 +1,15 @@
+{
+  "target_class": "cembrene-class TPS (CeeSs)",
+  "input_proteins": ["input/all_tps.fasta"],
+  "query_hmm": "input/query.hmm",
+  "reference_dir": "input/references",
+  "tps_workbook": "TPS.xlsx",
+  "thresholds": {
+    "min_score": 0,
+    "max_evalue": 0.001,
+    "min_length": 300,
+    "ceess_threshold": 0.9,
+    "top_k": 5
+  },
+  "context": "Coral transcriptome-derived TPS homologs; nominate cembrene A/B synthase candidates for yeast heterologous expression."
+}

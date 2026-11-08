@@ -1,0 +1,15 @@
+{
+  "target_class": "terpene synthase (TPS, broad)",
+  "input_proteins": ["input/all_tps.fasta"],
+  "query_hmm": "input/query.hmm",
+  "reference_dir": "input/references",
+  "tps_workbook": "TPS.xlsx",
+  "thresholds": {
+    "min_score": 0,
+    "max_evalue": 0.001,
+    "min_length": 300,
+    "ceess_threshold": 0.9,
+    "top_k": 10
+  },
+  "context": "Pathway-first study: inventory all coral-like TPS homologs before committing to a cembranoid hypothesis; use the pathway artifact to record enzyme slots the engines should fill."
+}

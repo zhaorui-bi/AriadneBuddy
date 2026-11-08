@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "mimosa-finding-ledger-batch/v1",
+  "batchId": "pretooluse-3cbb9d06fd19f9c71411f68c1d57e13d",
+  "runId": null,
+  "runStatus": "completed",
+  "coverage": {
+    "status": "complete",
+    "reasons": []
+  },
+  "source": {
+    "component": "zcode-hook",
+    "operationId": "PreToolUse"
+  },
+  "revision": null,
+  "diffHash": null,
+  "rulesVersion": null,
+  "sessionHash": "d7631d4bba1d87ee17bab5426f1a0da711224f4f15be52acf799a72eeb919f96",
+  "reportRef": null,
+  "events": [
+    {
+      "eventId": "hook-c0ec9cb575ff56640f1f01cb676a10e0",
+      "findingId": "mimosa-f0b108ba215b4ec958b75793",
+      "type": "finding_blocked",
+      "at": "2026-11-07T18:06:41.168Z",
+      "identity": {
+        "projectRelativeFile": "test-python/test_ariadne_cli.py",
+        "ruleId": "security",
+        "codeEvidenceHash": "13ca18bc3a83fc8ca32a3b0c9cfee255553c1003eefa3668574bdf8804e69ad9",
+        "confidence": "stable"
+      },
+      "scope": "direct",
+      "line": 24,
+      "endLine": 24,
+      "reasonCode": "deny",
+      "reportedToAgent": true,
+      "evidence": {
+        "kind": "source",
+        "boundary": "candidate",
+        "producer": "deterministic",
+        "evidenceHash": "13ca18bc3a83fc8ca32a3b0c9cfee255553c1003eefa3668574bdf8804e69ad9"
+      },
+      "sequence": 0
+    }
+  ],
+  "observedFindingIds": [],
+  "verifiedFiles": [],
+  "recordedAt": "2026-11-07T18:06:41.393Z"
+}
