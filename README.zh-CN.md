@@ -1,52 +1,64 @@
 <p align="center">
-  <img src="./build/logo-256.png" width="132" alt="AriadneBuddy — 官方 Ariadne 线稿徽标">
-</p>
-
-<h1 align="center">AriadneBuddy</h1>
-
-<p align="center"><strong>Beta 候选版 · v0.1.0-beta.1</strong></p>
-
-<p align="center"><em>循线而行：从文献到经过验证的天然产物候选。</em></p>
-
-<p align="center">
-  <a href="./README.md">English</a> · 中文介绍 ·
-  <a href="./docs/zh-CN/QUICKSTART.md">快速上手</a> ·
-  <a href="./docs/ARCHITECTURE.md">架构</a>
+  <img src="./build/logo-256.png" alt="AriadneBuddy — Ariadne 女神线稿徽标" width="128">
 </p>
 
 <p align="center">
-  <img src="./docs/images/workbench.png" width="860" alt="AriadneBuddy Web 工作台 — 羊皮纸与爱琴海蓝、Ariadne 女神线稿、品牌下的希腊回纹">
+  <strong>把一个研究问题，变成一份经过验证的 cembrene 合酶候选名单。</strong><br>
+  <em>Ariadne 引擎的多智能体伴侣——六位专家智能体、三台确定性引擎、一条可审计的闭环，没有黑箱终点。</em>
+</p>
+
+<p align="center">
+  <em>Journal of Natural Products</em> (2026) &nbsp;·&nbsp; DOI: <a href="https://doi.org/10.1021/acs.jnatprod.6c00686">10.1021/acs.jnatprod.6c00686</a>
+</p>
+
+<p align="center">
+  <a href="./README.md">English</a> &nbsp;·&nbsp;
+  <a href="#引用">引用</a> &nbsp;·&nbsp;
+  <a href="./docs/zh-CN/QUICKSTART.md">文档</a>
+</p>
+
+|         |                                                                        |
+| ------- | ---------------------------------------------------------------------- |
+| 论文    | [![Journal of Natural Products 2026][jnp]][paper] [![DOI][doi]][paper] |
+| 引擎    | [![ariadne-tps 1.1.0][engine]][engine-repo] [![Python ≥ 3.10][python]][engine-repo] |
+| 软件    | [![Version][version]][releases] [![Node ≥ 24.15][node]][releases] [![License MIT][license]][license-file] |
+
+[jnp]: https://img.shields.io/badge/J.%20Nat.%20Prod.-2026-4B607C?style=flat-square
+[doi]: https://img.shields.io/badge/DOI-10.1021%2Facs.jnatprod.6c00686-4B607C?style=flat-square
+[paper]: https://doi.org/10.1021/acs.jnatprod.6c00686
+[engine]: https://img.shields.io/badge/ariadne--tps-1.1.0-4B607C?style=flat-square
+[python]: https://img.shields.io/badge/Python-%E2%89%A53.10-4B607C?style=flat-square&logo=python&logoColor=white
+[engine-repo]: https://github.com/zhaorui-bi/Ariadne
+[version]: https://img.shields.io/badge/Version-0.1.0--beta.1-4B607C?style=flat-square
+[node]: https://img.shields.io/badge/Node-%E2%89%A524.15-4B607C?style=flat-square&logo=node.js&logoColor=white
+[releases]: https://github.com/zhaorui-bi/AriadneBuddy
+[license]: https://img.shields.io/badge/License-MIT-4B607C?style=flat-square
+[license-file]: ./LICENSE
+
+<p align="center">
+  <img src="./docs/images/workbench.png" width="840" alt="AriadneBuddy Web 工作台 — 羊皮纸与爱琴海蓝、女神线稿、品牌下的希腊回纹">
 </p>
 
 ---
 
-## 为什么做这个软件
+## 这是什么
 
-发现新的生物合成酶很慢：领域专家要读文献、围绕生物合成途径提出假说、
-在基因组里挖掘候选酶、提名候选名单、设计表达实验、解读结果——然后迭代。
-每一步都产出下一步所依赖的证据，而这些过程通常不可复现。
+**AriadneBuddy** 把已发表的 [Ariadne](https://github.com/zhaorui-bi/Ariadne)
+平台——*J. Nat. Prod.* 2026 报道的珊瑚 cembrene 类合酶（CeeSs）背后的四阶段、
+全程可审计流水线——包进一个多智能体工作台，让它行走的是完整的科学方法，
+而不只是筛选：
 
-**AriadneBuddy** 把这套专家工作流变成智能体可执行的形式。它围绕已发表的
-[Ariadne](https://github.com/zhaorui-bi/Ariadne) 珊瑚萜类合酶（TPS）发现引擎
-构建——cembranoid 生物合成与 cembrene 类（CeeSs）候选提名
-（Wang et al., *J. Nat. Prod.* 2026,
-[10.1021/acs.jnatprod.6c00686](https://doi.org/10.1021/acs.jnatprod.6c00686)）——
-并将其泛化为任何智能体都能行走、任何人类都能审计的持久门禁研究回路。
+- **六位专家智能体**——文献调研员、假说架构师、途径重构师、提名官、实验
+  设计师、验证解读员——撰写知识阶段，并在每条回复中声明角色。
+- **三台确定性引擎即工具**——HMM 检索（pyhmmer）、ESM2 语义打分、特征空间
+  结构检索（最近参考分类）。所有分数、E 值、概率与最近参考都来自引擎产物；
+  对话模型从不编造科学。
+- **诚实的人机门禁**——假说审批、提名审批、迭代/结题决策都是显式关注项。
+  调用方声明的响应不是已验证的人工批准，审计失败永远无法被豁免成成功。
 
-三个核心设计：
-
-1. **专家角色即智能体。** 六位专家角色——文献调研员、假说架构师、途径重构师、
-   提名官、实验设计师、验证解读员——撰写*知识*阶段；每条回复都声明产出它的角色。
-2. **确定性引擎即工具。** 科学结论从不来自对话模型。HMM 检索（pyhmmer）、
-   ESM2 语义打分、特征空间结构检索（最近参考分类）以受控子进程运行，其产物
-   ——分数、E 值、概率、最近参考——是唯一的证据来源。
-3. **人是真实的门禁，不是名义上的。** 假说审批、提名审批、迭代/结题决策都是
-   显式关注项；调用方声明的响应不会被当作已验证的人工批准，审计失败也永远
-   无法被豁免成成功。
-
-由此贯通闭环——**计算提名 → 实验设计 → 验证解读 → 迭代优化**——并提供 CLI、
-完整终端 TUI、本地 Web 工作台与 Electron 桌面应用四种界面，视觉采用 Ariadne
-设计语言：羊皮纸、爱琴海蓝、铜绿、鎏金、陶瓦红，与一条希腊回纹饰带。
+它贯通的闭环——**计算提名 → 实验设计 → 验证解读 → 迭代优化**——运行于 CLI、
+完整终端 TUI、本地 Web 工作台与 Electron 桌面应用，视觉采用 Ariadne 设计
+语言：羊皮纸、爱琴海蓝、铜绿、鎏金、陶瓦红，以及女神线稿下的一条希腊回纹。
 
 ## 科学闭环
 
@@ -77,9 +89,10 @@
 | **门禁** | **人** | 迭代（≤ 4 轮，回到假说）或结题 | — |
 | 交接 | 系统 | 血缘校验后的发布：`validated` | 任务记录 + 溯源清单 |
 
-没有 torch/transformers 时闭环照常运行：控制器打开 `esm_unavailable` 门，
-你显式豁免（`proceed_without_esm`），提名携带 HMM + 特征空间证据，结果标记
-`conditional_nomination` 并附限制说明。
+每个引擎作业都携带 `run-manifest.json`（请求、输入、非密科学配置与配置输出的
+sha256 指纹），控制器在消费任何阶段产物前都会重新校验。没有
+torch/transformers 时闭环照常运行——显式 `proceed_without_esm` 豁免后，提名由
+HMM + 特征空间证据承载，结果为 `conditional_nomination`。
 
 ## 21 个智能体工具
 
@@ -88,9 +101,6 @@
 | 引擎 | `ariadne_status` · `ariadne_catalog` · `ariadne_build_hmm` · `ariadne_discover` · `ariadne_filter` · `ariadne_score_candidates` · `ariadne_classify` · `ariadne_pipeline_run` · `ariadne_audit_nomination` |
 | 持久作业 | `ariadne_job_list` · `ariadne_job_status` · `ariadne_job_manifest` · `ariadne_job_log` · `ariadne_job_artifacts` · `ariadne_job_cancel` |
 | 研究控制器 | `ariadne_research_create` · `ariadne_research_status` · `ariadne_research_list` · `ariadne_research_advance` · `ariadne_research_respond` · `ariadne_research_cancel` |
-
-每个引擎作业都携带 `run-manifest.json`（请求、输入、非密科学配置与配置输出的
-sha256 指纹）；控制器在消费任何阶段产物前都会重新校验。
 
 ## 提名请求示例
 
@@ -106,19 +116,16 @@ sha256 指纹）；控制器在消费任何阶段产物前都会重新校验。
 }
 ```
 
-完整可运行的案例见 [`examples/cases/`](./examples/cases/)：标准 CeeSs 筛选、
+完整可运行案例见 [`examples/cases/`](./examples/cases/)：标准 CeeSs 筛选、
 宽松探索筛选、途径优先的 TPS 普查。
 
 ## 安装
 
-**前置条件**
-
-- Node.js ≥ 24.15、npm、pnpm 12
-- Python 3.10+ 与 [ariadne-tps](https://github.com/zhaorui-bi/Ariadne) 检出，
-  安装 `pyhmmer、pyrodigal、scikit-learn、openpyxl`（检出内 `.venv` 自动探测）
-- 可选：`pip install ariadne-tps[esm]` 启用 ESM2 语义打分
-- 任意 OpenAI 兼容模型 API Key（Z.AI / Kimi Coding / DeepSeek / 自定义），
-  无需登录流程
+**前置条件** —— Node.js ≥ 24.15、npm、pnpm 12；Python 3.10+ 与
+[ariadne-tps](https://github.com/zhaorui-bi/Ariadne) 检出（`pyhmmer、
+pyrodigal、scikit-learn、openpyxl`，检出内 `.venv` 自动探测）；可选
+`pip install ariadne-tps[esm]` 启用 ESM2 打分；任意 OpenAI 兼容模型 API Key
+（无需登录流程）。
 
 ```bash
 git clone https://github.com/zhaorui-bi/AriadneBuddy && cd AriadneBuddy
@@ -132,29 +139,20 @@ npm run setup                                          # 安装 + 构建 + 品�
 
 ```bash
 ./bin/ariadnebuddy web        # 古希腊风格 Web 工作台 → http://127.0.0.1:58627
-./bin/ariadnebuddy            # 完整终端 TUI（AriadneBuddy 欢迎艺术）
+./bin/ariadnebuddy            # 完整终端 TUI
 ./bin/ariadnebuddy chat       # 轻量 REPL
 npm start                     # Electron 桌面应用
 ```
 
-然后直接下令，例如：*“用 Ariadne 引擎对 input/all_tps.fasta 做 cembranoid CeeSs
-提名，走完整闭环”*——智能体会加载 `ariadne` 技能、冻结请求并推进回路；你在各
-门禁处审批。
-
-也支持免模型任务控制：
-
-```bash
-ariadnebuddy research create  --input create.json     # 冻结研究授权
-ariadnebuddy research advance --id research_<hash>    # 对账并推进一步
-ariadnebuddy research respond --input respond.json --id research_<hash>
-ariadnebuddy research cancel  --id research_<hash> --input cancel.json
-```
-
-想看真实 pyhmmer/sklearn 引擎跑完整闭环并打印提名候选及其证据：
+然后直接下令——*“用 Ariadne 引擎对 input/all_tps.fasta 做 cembranoid CeeSs
+提名，走完整闭环”*——并在各门禁处审批。也支持免模型任务控制
+（`ariadnebuddy research create|advance|respond|cancel`）；而
 
 ```bash
 node engine/apps/ariadne-buddy/scripts/run-real-engine-demo.mjs /path/to/Ariadne
 ```
+
+会用真实 pyhmmer/sklearn 引擎跑完整闭环，并打印提名候选及其证据。
 
 ## 文档
 
@@ -165,20 +163,40 @@ node engine/apps/ariadne-buddy/scripts/run-real-engine-demo.mjs /path/to/Ariadne
 | [科学工作流纪律](./docs/SCIENTIFIC_WORKFLOWS.md) | 证据分类、阶段契约、表述规范 |
 | [研究任务](./docs/RESEARCH_TASKS.md) | 状态机、响应动作、保证 |
 | [常见问题](./docs/zh-CN/FAQ.md) · [故障排查](./docs/zh-CN/TROUBLESHOOTING.md) · [发布流程](./docs/RELEASE.md) | 解答、修复、发版 |
-| English | [Quick start](./docs/QUICKSTART.md) · [FAQ](./docs/FAQ.md) · [Troubleshooting](./docs/TROUBLESHOOTING.md) · [Workflow](./docs/SCIENTIFIC_WORKFLOWS.md) |
+| English | [Quick start](./docs/QUICKSTART.md) · [FAQ](./docs/FAQ.md) · [Workflow](./docs/SCIENTIFIC_WORKFLOWS.md) |
 
 ## 验证
 
-以上一切由本地 `npm run check` 把关——lint、类型检查、覆盖率门禁测试（32）、
-Python 适配器套件（10）、打包、桌面启动、TUI 回归（188），以及 MCP / 研究 /
-Web 冒烟；研究冒烟会驱动整个闭环直至验证交接。
+一切由本地 `npm run check` 把关——lint、类型检查、覆盖率门禁测试、Python
+适配器套件、打包、桌面启动、TUI 回归，以及 MCP / 研究 / Web 冒烟；研究冒烟
+驱动整个闭环直至验证交接。
 
 ## 引用
 
-若 AriadneBuddy 对你的研究有帮助，请引用本软件与 Ariadne 论文
-（Wang et al., *J. Nat. Prod.* 2026,
-[10.1021/acs.jnatprod.6c00686](https://doi.org/10.1021/acs.jnatprod.6c00686)），
-并报告所用引擎版本、参考数据快照、HMM 库与 ESM 模型。见
+若 AriadneBuddy 对你的研究有帮助，请引用随附的 *Journal of Natural Products*
+论文（即 Ariadne 论文）：
+
+> Wang, Y.; Yu, M.; Jiang, Z.; Zhou, C.; Feng, W.; Yu, K.; Ju, J.; Li, F.
+> "Identification of Cembrene Synthases Uncovers Polyphyletic Origins of
+> 14-Membered Carbocyclic Cembranoids Biosynthesis in Corals."
+> *Journal of Natural Products*, **2026**, American Chemical Society.
+> DOI: [10.1021/acs.jnatprod.6c00686](https://doi.org/10.1021/acs.jnatprod.6c00686). ISSN 0163-3864.
+
+```bibtex
+@article{Wang2026Ariadne,
+  author  = {Wang, Yinhao and Yu, Mengmeng and Jiang, Zhaorui and Zhou, Chengyu and Feng, Wei and Yu, Ke and Ju, Jianhua and Li, Feng},
+  title   = {Identification of Cembrene Synthases Uncovers Polyphyletic Origins of 14-Membered Carbocyclic Cembranoids Biosynthesis in Corals},
+  journal = {Journal of Natural Products},
+  year    = {2026},
+  doi     = {10.1021/acs.jnatprod.6c00686},
+  url     = {https://doi.org/10.1021/acs.jnatprod.6c00686},
+  issn    = {0163-3864},
+  publisher = {American Chemical Society},
+}
+```
+
+同时请报告所用 AriadneBuddy 版本（`ariadnebuddy --version`）、ariadne-tps
+版本、参考数据快照、HMM 库与 ESM 模型。本软件自身的记录见
 [CITATION.cff](./CITATION.cff)。
 
 ## 许可与致谢

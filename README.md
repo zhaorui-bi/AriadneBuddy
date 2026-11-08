@@ -1,66 +1,74 @@
 <p align="center">
-  <img src="./build/logo-256.png" width="132" alt="AriadneBuddy — the official Ariadne mark">
-</p>
-
-<h1 align="center">AriadneBuddy</h1>
-
-<p align="center"><strong>Beta · v0.1.0-beta.1</strong></p>
-
-<p align="center"><em>Follow the thread: from literature to validated natural-product candidates.</em></p>
-
-<p align="center">
-  中文介绍 · <a href="./README.zh-CN.md">English</a> ·
-  <a href="./docs/QUICKSTART.md">Quick start</a> ·
-  <a href="./docs/ARCHITECTURE.md">Architecture</a>
+  <img src="./build/logo-256.png" alt="AriadneBuddy — the Ariadne goddess mark" width="128">
 </p>
 
 <p align="center">
-  <img src="./docs/images/workbench.png" width="860" alt="The AriadneBuddy web workbench — parchment and aegean blue, the Ariadne goddess mark, a Greek-key meander under the brand">
+  <strong>Turn a research question into a validated shortlist of cembrene synthase candidates.</strong><br>
+  <em>The multi-agent companion to the Ariadne engines — six expert agents, three deterministic engines, one auditable loop, no black-box endpoint.</em>
+</p>
+
+<p align="center">
+  <em>Journal of Natural Products</em> (2026) &nbsp;·&nbsp; DOI: <a href="https://doi.org/10.1021/acs.jnatprod.6c00686">10.1021/acs.jnatprod.6c00686</a>
+</p>
+
+<p align="center">
+  <a href="./README.zh-CN.md">中文</a> &nbsp;·&nbsp;
+  <a href="#citation">Citation</a> &nbsp;·&nbsp;
+  <a href="./docs/QUICKSTART.md">Docs</a>
+</p>
+
+|         |                                                                        |
+| ------- | ---------------------------------------------------------------------- |
+| Paper   | [![Journal of Natural Products 2026][jnp]][paper] [![DOI][doi]][paper] |
+| Engine  | [![ariadne-tps 1.1.0][engine]][engine-repo] [![Python ≥ 3.10][python]][engine-repo] |
+| App     | [![Version][version]][releases] [![Node ≥ 24.15][node]][releases] [![License MIT][license]][license-file] |
+
+[jnp]: https://img.shields.io/badge/J.%20Nat.%20Prod.-2026-4B607C?style=flat-square
+[doi]: https://img.shields.io/badge/DOI-10.1021%2Facs.jnatprod.6c00686-4B607C?style=flat-square
+[paper]: https://doi.org/10.1021/acs.jnatprod.6c00686
+[engine]: https://img.shields.io/badge/ariadne--tps-1.1.0-4B607C?style=flat-square
+[python]: https://img.shields.io/badge/Python-%E2%89%A53.10-4B607C?style=flat-square&logo=python&logoColor=white
+[engine-repo]: https://github.com/zhaorui-bi/Ariadne
+[version]: https://img.shields.io/badge/Version-0.1.0--beta.1-4B607C?style=flat-square
+[node]: https://img.shields.io/badge/Node-%E2%89%A524.15-4B607C?style=flat-square&logo=node.js&logoColor=white
+[releases]: https://github.com/zhaorui-bi/AriadneBuddy
+[license]: https://img.shields.io/badge/License-MIT-4B607C?style=flat-square
+[license-file]: ./LICENSE
+
+<p align="center">
+  <img src="./docs/images/workbench.png" width="840" alt="The AriadneBuddy web workbench — parchment and aegean blue, the goddess mark, a Greek-key meander under the brand">
 </p>
 
 ---
 
-## Why this exists
+## What this is
 
-Finding new biosynthetic enzymes is slow: a domain expert reads the literature,
-forms hypotheses about a biosynthetic pathway, mines genomes for candidate
-enzymes, nominates a shortlist, designs expression experiments, interprets the
-results — and iterates. Each step produces evidence that the next step depends
-on, and none of it is usually reproducible.
+**AriadneBuddy** wraps the published
+[Ariadne](https://github.com/zhaorui-bi/Ariadne) platform — the four-stage,
+fully auditable pipeline behind the coral cembrene-class synthases (CeeSs)
+reported in *J. Nat. Prod.* 2026 — in a multi-agent workbench that walks the
+whole scientific method, not just the screening:
 
-**AriadneBuddy** turns that expert workflow into agent-executable form. It is
-built around the published
-[Ariadne](https://github.com/zhaorui-bi/Ariadne) engine for coral terpene
-synthase (TPS) discovery — cembranoid biosynthesis and cembrene-class (CeeSs)
-candidate nomination (Wang et al., *J. Nat. Prod.* 2026,
-[10.1021/acs.jnatprod.6c00686](https://doi.org/10.1021/acs.jnatprod.6c00686)) —
-and generalizes it into a durable, gated research loop that any agent can walk
-and any human can audit.
+- **Six expert agents** — Literature Surveyor (文献调研), Hypothesis Architect
+  (假说生成), Pathway Reconstructor (途径重构), Nomination Steward (候选提名),
+  Experimental Designer (实验设计), Validation Interpreter (验证解读) — author
+  the knowledge stages and name themselves in every reply.
+- **Three deterministic engines as tools** — HMM retrieval (pyhmmer), ESM2
+  semantic scoring, and feature-space structure retrieval (nearest-reference
+  classification). Every score, E-value, probability, and nearest reference
+  comes from engine artifacts; the conversational model never invents science.
+- **Human gates, honestly** — hypothesis approval, nomination approval, and
+  the iterate/conclude decision are explicit attention items. A
+  caller-declared response is not verified human approval, and an audit
+  failure can never be waived into success.
 
-Three ideas make it work:
-
-1. **Expert roles as agents.** Six expert personas — Literature Surveyor
-   (文献调研), Hypothesis Architect (假说生成), Pathway Reconstructor (途径重构),
-   Nomination Steward (候选提名), Experimental Designer (实验设计), Validation
-   Interpreter (验证解读) — author the *knowledge* stages. Every reply names
-   the role that produced it.
-2. **Deterministic engines as tools.** The science never comes from the
-   conversational model. HMM retrieval (pyhmmer), ESM2 semantic scoring, and
-   feature-space structure retrieval (nearest-reference classification) run as
-   bounded subprocesses whose artifacts — scores, E-values, probabilities,
-   nearest references — are the only source of evidence.
-3. **Human gates, not human-in-name-only.** Hypothesis approval, nomination
-   approval, and the iterate/conclude decision are explicit attention items.
-   A caller-declared response is never treated as verified human approval, and
-   an audit failure can never be waived into success.
-
-The result closes the loop — **computational nomination → experimental design →
-validation interpretation → iterative optimization** — through a CLI, a full
-terminal TUI, a local Web workbench, and an Electron desktop app, styled in the
+The loop it closes — **computational nomination → experimental design →
+validation interpretation → iterative optimization** — runs through a CLI, a
+full terminal TUI, a local web workbench, and an Electron desktop app, in the
 Ariadne visual language: parchment, aegean blue, verdigris, gold, terracotta,
-and a single Greek-key meander fret.
+and a single Greek-key meander under the goddess mark.
 
-## The closed scientific loop
+## The closed loop
 
 ```
 readiness → literature → hypothesis ──approve──→ pathway
@@ -75,7 +83,7 @@ readiness → literature → hypothesis ──approve──→ pathway
 | Stage | Owner | What happens | Frozen artifact |
 | --- | --- | --- | --- |
 | readiness | system | backend health, engine identity, reference data | frozen mandate + backend fingerprint |
-| literature | agent | citable sources, findings, gaps | `sources / findings / gaps` JSON |
+| literature | agent | citable sources, findings, gaps | `sources / findings / gaps` |
 | hypothesis | agent | testable statements tied to the target class | `hypotheses[{statement, prediction}]` |
 | **gate** | **human** | approve before any compute is spent | — |
 | pathway | agent | substrate → product steps + enzyme slots | `product / steps / enzyme_slots` |
@@ -89,10 +97,12 @@ readiness → literature → hypothesis ──approve──→ pathway
 | **gate** | **human** | iterate (≤ 4 rounds, back to hypothesis) or conclude | — |
 | handoff | system | lineage-verified release: `scientificOutcome = validated` | task record + manifests |
 
-Without torch/transformers the loop still runs: the controller opens an
-`esm_unavailable` gate, you waive it explicitly (`proceed_without_esm`), and
-nominations carry HMM + feature-space evidence with a `conditional_nomination`
-outcome and a recorded limitation.
+Every engine job carries a `run-manifest.json` — sha256 fingerprints of the
+request, inputs, non-secret scientific configuration, and configured output —
+and the controller re-verifies each stage output before consuming it. Without
+torch/transformers the loop still runs behind an explicit
+`proceed_without_esm` waiver, with nominations carried by HMM +
+feature-space evidence as `conditional_nomination`.
 
 ## The 21 agent tools
 
@@ -101,10 +111,6 @@ outcome and a recorded limitation.
 | Engines | `ariadne_status` · `ariadne_catalog` · `ariadne_build_hmm` · `ariadne_discover` · `ariadne_filter` · `ariadne_score_candidates` · `ariadne_classify` · `ariadne_pipeline_run` · `ariadne_audit_nomination` |
 | Durable jobs | `ariadne_job_list` · `ariadne_job_status` · `ariadne_job_manifest` · `ariadne_job_log` · `ariadne_job_artifacts` · `ariadne_job_cancel` |
 | Research controller | `ariadne_research_create` · `ariadne_research_status` · `ariadne_research_list` · `ariadne_research_advance` · `ariadne_research_respond` · `ariadne_research_cancel` |
-
-Every engine job carries a `run-manifest.json` with sha256 fingerprints of the
-request, inputs, non-secret scientific configuration, and the configured
-output; the controller re-verifies each stage output before consuming it.
 
 ## A nomination request
 
@@ -120,21 +126,16 @@ output; the controller re-verifies each stage output before consuming it.
 }
 ```
 
-Complete, runnable cases live in [`examples/cases/`](./examples/cases/):
-standard CeeSs screen, a relaxed exploratory screen, and a pathway-first TPS
-inventory.
+Runnable cases live in [`examples/cases/`](./examples/cases/): a standard CeeSs
+screen, a relaxed exploratory screen, and a pathway-first TPS inventory.
 
 ## Install
 
-**Prerequisites**
-
-- Node.js ≥ 24.15, npm, pnpm 12
-- Python 3.10+ with an [ariadne-tps](https://github.com/zhaorui-bi/Ariadne)
-  checkout and `pyhmmer, pyrodigal, scikit-learn, openpyxl` installed — a
-  checkout-local `.venv` is detected automatically
-- Optional: `pip install ariadne-tps[esm]` for ESM2 semantic scoring
-- Any OpenAI-compatible model API key (Z.AI / Kimi Coding / DeepSeek / custom) —
-  no login flows
+**Prerequisites** — Node.js ≥ 24.15, npm, pnpm 12; Python 3.10+ with an
+[ariadne-tps](https://github.com/zhaorui-bi/Ariadne) checkout (`pyhmmer,
+pyrodigal, scikit-learn, openpyxl`; a checkout-local `.venv` is detected
+automatically); optionally `pip install ariadne-tps[esm]` for ESM2 scoring;
+any OpenAI-compatible model API key (no login flows).
 
 ```bash
 git clone https://github.com/zhaorui-bi/AriadneBuddy && cd AriadneBuddy
@@ -147,31 +148,22 @@ npm run setup                                          # install + build + brand
 ## Use
 
 ```bash
-./bin/ariadnebuddy web        # Greek/Roman Web workbench → http://127.0.0.1:58627
-./bin/ariadnebuddy            # full terminal TUI (AriadneBuddy welcome art)
+./bin/ariadnebuddy web        # Greek/Roman web workbench → http://127.0.0.1:58627
+./bin/ariadnebuddy            # full terminal TUI
 ./bin/ariadnebuddy chat       # lightweight REPL
 npm start                     # Electron desktop app
 ```
 
-Then just ask, e.g. *“用 Ariadne 引擎对 input/all_tps.fasta 做 cembranoid CeeSs
-提名，走完整闭环”* — the agent loads the `ariadne` skill, freezes the request,
-and walks the loop; you approve the gates.
-
-Model-free task control also works:
-
-```bash
-ariadnebuddy research create  --input create.json     # freeze the mandate
-ariadnebuddy research advance --id research_<hash>    # reconcile + advance one step
-ariadnebuddy research respond --input respond.json --id research_<hash>
-ariadnebuddy research cancel  --id research_<hash> --input cancel.json
-```
-
-To see the whole loop run against the real pyhmmer/sklearn engines with the
-nominated candidates and their evidence printed:
+Then just ask — *“用 Ariadne 引擎对 input/all_tps.fasta 做 cembranoid CeeSs
+提名，走完整闭环”* — and approve the gates. Model-free task control also
+works (`ariadnebuddy research create|advance|respond|cancel`), and
 
 ```bash
 node engine/apps/ariadne-buddy/scripts/run-real-engine-demo.mjs /path/to/Ariadne
 ```
+
+drives the entire loop against the real pyhmmer/sklearn engines and prints
+the nominated candidates with their evidence.
 
 ## Documentation
 
@@ -186,25 +178,45 @@ node engine/apps/ariadne-buddy/scripts/run-real-engine-demo.mjs /path/to/Ariadne
 
 ## Verification
 
-Everything above is gated locally by `npm run check` — lint, typecheck,
-coverage-threshold tests (32), the Python adapter suite (10), packaging,
-desktop startup, TUI regression (188), and the MCP / research / web smokes;
-the research smoke drives the entire loop to a validated handoff.
+Everything is gated locally by `npm run check` — lint, typecheck,
+coverage-threshold tests, the Python adapter suite, packaging, desktop
+startup, TUI regression, and the MCP / research / web smokes; the research
+smoke drives the entire loop to a validated handoff.
 
 ## Citation
 
-If AriadneBuddy contributes to your research, cite this software and the
-Ariadne paper (Wang et al., *J. Nat. Prod.* 2026,
-[10.1021/acs.jnatprod.6c00686](https://doi.org/10.1021/acs.jnatprod.6c00686)),
-reporting the engine revision, reference snapshot, HMM libraries, and ESM model
-used. See [CITATION.cff](./CITATION.cff).
+If AriadneBuddy contributes to your research, please cite the accompanying
+*Journal of Natural Products* article (the Ariadne paper):
+
+> Wang, Y.; Yu, M.; Jiang, Z.; Zhou, C.; Feng, W.; Yu, K.; Ju, J.; Li, F.
+> "Identification of Cembrene Synthases Uncovers Polyphyletic Origins of
+> 14-Membered Carbocyclic Cembranoids Biosynthesis in Corals."
+> *Journal of Natural Products*, **2026**, American Chemical Society.
+> DOI: [10.1021/acs.jnatprod.6c00686](https://doi.org/10.1021/acs.jnatprod.6c00686). ISSN 0163-3864.
+
+```bibtex
+@article{Wang2026Ariadne,
+  author  = {Wang, Yinhao and Yu, Mengmeng and Jiang, Zhaorui and Zhou, Chengyu and Feng, Wei and Yu, Ke and Ju, Jianhua and Li, Feng},
+  title   = {Identification of Cembrene Synthases Uncovers Polyphyletic Origins of 14-Membered Carbocyclic Cembranoids Biosynthesis in Corals},
+  journal = {Journal of Natural Products},
+  year    = {2026},
+  doi     = {10.1021/acs.jnatprod.6c00686},
+  url     = {https://doi.org/10.1021/acs.jnatprod.6c00686},
+  issn    = {0163-3864},
+  publisher = {American Chemical Society},
+}
+```
+
+Please also report the AriadneBuddy version (`ariadnebuddy --version`), the
+ariadne-tps revision, reference snapshot, HMM libraries, and ESM model used.
+See [CITATION.cff](./CITATION.cff) for this software's own record.
 
 ## License & acknowledgements
 
 MIT. Built on the [OpenAqua-Harness](https://github.com/zhaorui-bi/OpenAqua-Harness)
-template, powered by the vendored
-[Kimi Code](https://github.com/MoonshotAI/kimi-code) agent engine (own license
-under `engine/`), bridging the MIT [ariadne-tps](https://github.com/zhaorui-bi/Ariadne)
-engines as an external checkout. Nominated candidates still require
-heterologous expression and product confirmation before any claim of function —
-a screening score is not activity.
+template, powered by the vendored [Kimi Code](https://github.com/MoonshotAI/kimi-code)
+agent engine (own license under `engine/`), bridging the MIT
+[ariadne-tps](https://github.com/zhaorui-bi/Ariadne) engines as an external
+checkout. Nominated candidates still require heterologous expression and
+product confirmation before any claim of function — a screening score is not
+activity.
