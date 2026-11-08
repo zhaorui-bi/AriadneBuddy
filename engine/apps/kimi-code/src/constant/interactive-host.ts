@@ -1,5 +1,5 @@
 export interface InteractiveHostBrand {
-  readonly id: 'kimi-code' | 'openaqua-harness';
+  readonly id: 'kimi-code' | 'ariadne-buddy';
   readonly productName: string;
   readonly assistantName: string;
   readonly commandName: string;
@@ -39,8 +39,8 @@ const KIMI_CODE_BRAND: InteractiveHostBrand = {
   hiddenCommands: [],
 };
 
-function openAquaVersion(env: NodeJS.ProcessEnv): string | undefined {
-  const value = env['OPENAQUA_VERSION']?.trim();
+function ariadneBuddyVersion(env: NodeJS.ProcessEnv): string | undefined {
+  const value = env['ARIADNE_VERSION']?.trim();
   if (value === undefined || value.length === 0 || value.length > 64) return undefined;
   return /^[0-9A-Za-z.+-]+$/.test(value) ? value : undefined;
 }
@@ -48,39 +48,39 @@ function openAquaVersion(env: NodeJS.ProcessEnv): string | undefined {
 export function resolveInteractiveHostBrand(
   env: NodeJS.ProcessEnv = process.env,
 ): InteractiveHostBrand {
-  if (env['OPENAQUA_TUI'] !== '1') return KIMI_CODE_BRAND;
+  if (env['ARIADNE_TUI'] !== '1') return KIMI_CODE_BRAND;
   return {
-    id: 'openaqua-harness',
-    productName: 'OpenAqua Harness',
-    assistantName: 'OpenAqua',
-    commandName: 'openaqua',
-    processName: 'openaqua-harness',
-    logo: ['<~AQUA~>', ' HARNESS'],
+    id: 'ariadne-buddy',
+    productName: 'AriadneBuddy',
+    assistantName: 'Ariadne',
+    commandName: 'ariadnebuddy',
+    processName: 'ariadne-buddy',
+    logo: ['<~THREAD~>', ' LABYRINTH'],
     welcomeArt: [
-      '   ____                   ___',
-      '  / __ \\____  ___  ____  /   | ____ ___  ______ _',
-      ' / / / / __ \\/ _ \\/ __ \\/ /| |/ __ `/ / / / __ `/',
-      '/ /_/ / /_/ /  __/ / / / ___ / /_/ / /_/ / /_/ /',
-      '\\____/ .___/\\___/_/ /_/_/  |_\\__, /\\__,_/\\__,_/',
-      '    /_/                       /_/',
-      '       <====[ H A R N E S S ]====>',
+      '    ___                              __  __                   ',
+      '   /   |  _________ ___  _______   / / / /____  _______ ____ ',
+      '  / /| | / ___/ __ `/ / / / ___/  / / / __/ _ \\/ ___/ __ `/ _ \\',
+      ' / ___ |/ /  / /_/ / /_/ (__  )  / / / /_/  __/ /  / /_/ /  __/',
+      '/_/  |_/_/   \\__, /\\__,_/____/  /_/  \\__/\\___/_/   \\__, /\\___/ ',
+      '            /____/                                /____/',
+      '       <=====[ T H R E A D   T H R O U G H ]=====>',
     ],
-    welcomeTagline: 'AGENTIC WATER-TREATMENT DESIGN',
-    welcomeDescription: 'Evidence-grounded early-stage process-train workbench',
-    welcomeSpecialties: 'PARSE  ::  RETRIEVE  ::  PLAN  ::  CRITIQUE  ::  EXPLAIN',
+    welcomeTagline: 'MULTI-AGENT SCIENTIFIC DISCOVERY',
+    welcomeDescription: 'Natural-product candidate nomination on deterministic Ariadne engines',
+    welcomeSpecialties: 'SURVEY :: HYPOTHESIZE :: NOMINATE :: VALIDATE',
     transcriptMarker: '› ',
     promptSymbol: '›',
-    promptLabel: 'WATER QUERY',
+    promptLabel: 'DISCOVERY',
     modelSetupHint: 'Run /provider to configure a model.',
     modelMissingHint: 'not set, run /provider',
     showRemoteBanners: false,
     hiddenCommands: ['desktop', 'feedback', 'login', 'plugins', 'remote-control', 'web'],
     identity: {
-      productName: 'openaqua-harness',
-      platform: 'openaqua_harness',
-      uiMode: 'openaqua-harness',
+      productName: 'ariadne-buddy',
+      platform: 'ariadne_buddy',
+      uiMode: 'ariadne-buddy',
     },
-    version: openAquaVersion(env),
+    version: ariadneBuddyVersion(env),
   };
 }
 

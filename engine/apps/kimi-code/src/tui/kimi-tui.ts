@@ -997,7 +997,7 @@ export class KimiTUI {
         // shows the config defaults the engine would apply at createSession
         // time (model, permission, plan mode, thinking effort, context cap).
         await this.hydrateLazyConfigDefaults();
-        if (INTERACTIVE_HOST.id !== 'openaqua-harness') {
+        if (INTERACTIVE_HOST.id !== 'ariadne-buddy') {
           this.appendStartupNotice(SESSIONLESS_STARTUP_NOTICE);
         }
       }
@@ -3459,7 +3459,7 @@ export class KimiTUI {
   }
 
   showError(message: string): void {
-    if (INTERACTIVE_HOST.id === 'openaqua-harness' && message === LLM_NOT_SET_MESSAGE) {
+    if (INTERACTIVE_HOST.id === 'ariadne-buddy' && message === LLM_NOT_SET_MESSAGE) {
       this.showNotice(
         'Model setup required',
         'Run /provider to add an API provider and select a model.',

@@ -7,7 +7,7 @@ export default defineConfig({
       'packages/*',
       '!packages/minidb',
       'apps/kimi-code',
-      'apps/openaqua-harness',
+      'apps/ariadne-buddy',
       'apps/vis/server',
       'apps/vis/web',
       ...vscodeProjects,

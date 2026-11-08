@@ -315,7 +315,7 @@ describe('KimiTUI startup', () => {
     ).finishStartup(false);
 
     const transcript = driver.state.transcriptContainer.render(160).join('\n');
-    if (INTERACTIVE_HOST.id === 'openaqua-harness') {
+    if (INTERACTIVE_HOST.id === 'ariadne-buddy') {
       expect(transcript).not.toContain('No session yet');
     } else {
       expect(transcript).toContain('No session yet — one will be created on your first message.');

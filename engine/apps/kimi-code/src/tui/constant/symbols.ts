@@ -1,6 +1,6 @@
 import { INTERACTIVE_HOST } from '#/constant/interactive-host';
 
-// The upstream host keeps its solid status dot. OpenAqua uses a lighter
+// The upstream host keeps its solid status dot. AriadneBuddy uses a lighter
 // chevron so transcript sections do not read as a column of heavy circles.
 export const STATUS_BULLET = INTERACTIVE_HOST.transcriptMarker;
 

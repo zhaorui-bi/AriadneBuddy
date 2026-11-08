@@ -21,20 +21,20 @@ export interface ToolbarTip {
  * Subset of toolbar tips shown behind the composing spinner.
  */
 export const WORKING_TIPS: readonly ToolbarTip[] = [
-  ...(INTERACTIVE_HOST.id === 'openaqua-harness'
+  ...(INTERACTIVE_HOST.id === 'ariadne-buddy'
     ? [
         {
-          text: 'start with source water, measured units, contaminants, effluent targets, and operating constraints',
+          text: 'start with the target class, input proteins, query HMM, and reference alignments',
           priority: 3,
           solo: true,
         },
         {
-          text: 'run status, inspect the taxonomy, and validate one case before a larger WContBench evaluation',
+          text: 'run status, browse the reference catalog, and validate one nomination request before a larger study',
           priority: 2,
           solo: true,
         },
         {
-          text: 'treat recommendations as early-stage decision support; preserve evidence, assumptions, risks, and uncertainty',
+          text: 'treat nominations as screened hypotheses; preserve HMM scores, probabilities, nearest references, and uncertainty',
           priority: 2,
           solo: true,
         },

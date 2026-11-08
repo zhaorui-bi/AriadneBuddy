@@ -67,22 +67,22 @@ function setDanceView(colored: boolean, phase: number): void {
 describe('WelcomeComponent', () => {
   const previousChalkLevel = chalk.level;
 
-  it('resolves an isolated OpenAqua presentation for the embedded host', () => {
+  it('resolves an isolated AriadneBuddy presentation for the embedded host', () => {
     const brand = resolveInteractiveHostBrand({
-      OPENAQUA_TUI: '1',
-      OPENAQUA_VERSION: '0.2.0',
+      ARIADNE_TUI: '1',
+      ARIADNE_VERSION: '0.2.0',
     });
 
     expect(brand).toMatchObject({
-      id: 'openaqua-harness',
-      productName: 'OpenAqua Harness',
-      commandName: 'openaqua',
-      logo: ['<~AQUA~>', ' HARNESS'],
-      welcomeTagline: 'AGENTIC WATER-TREATMENT DESIGN',
-      welcomeDescription: 'Evidence-grounded early-stage process-train workbench',
+      id: 'ariadne-buddy',
+      productName: 'AriadneBuddy',
+      commandName: 'ariadnebuddy',
+      logo: ['<~THREAD~>', ' LABYRINTH'],
+      welcomeTagline: 'MULTI-AGENT SCIENTIFIC DISCOVERY',
+      welcomeDescription: 'Natural-product candidate nomination on deterministic Ariadne engines',
       transcriptMarker: '› ',
       promptSymbol: '›',
-      promptLabel: 'WATER QUERY',
+      promptLabel: 'DISCOVERY',
       showRemoteBanners: false,
       hiddenCommands: expect.arrayContaining(['desktop', 'login', 'remote-control']),
       version: '0.2.0',
@@ -100,8 +100,8 @@ describe('WelcomeComponent', () => {
     });
     expect(
       resolveInteractiveHostBrand({
-        OPENAQUA_TUI: '1',
-        OPENAQUA_VERSION: '<invalid>',
+        ARIADNE_TUI: '1',
+        ARIADNE_VERSION: '<invalid>',
       }).version,
     ).toBeUndefined();
   });
@@ -115,18 +115,18 @@ describe('WelcomeComponent', () => {
     setRainbowDance(undefined);
   });
 
-  it('renders the responsive OpenAqua water-treatment console', () => {
+  it('renders the responsive AriadneBuddy discovery console', () => {
     const brand = resolveInteractiveHostBrand({
-      OPENAQUA_TUI: '1',
-      OPENAQUA_VERSION: '0.2.0',
+      ARIADNE_TUI: '1',
+      ARIADNE_VERSION: '0.2.0',
     });
     const state = { ...appState, model: '', sessionId: '' };
     const wide = new WelcomeComponent(state, brand).render(120).join('\n');
 
     expect(wide).toContain('____');
-    expect(wide).toContain('AGENTIC WATER-TREATMENT DESIGN');
-    expect(wide).toContain('PARSE  ::  RETRIEVE  ::  PLAN  ::  CRITIQUE  ::  EXPLAIN');
-    expect(wide).toContain('<====[ H A R N E S S ]====>');
+    expect(wide).toContain('MULTI-AGENT SCIENTIFIC DISCOVERY');
+    expect(wide).toContain('SURVEY :: HYPOTHESIZE :: NOMINATE :: VALIDATE');
+    expect(wide).toContain('<=====[ T H R E A D   T H R O U G H ]=====>');
     expect(wide).toContain('NOT CONFIGURED');
     expect(wide).toContain('Starts with your first message');
     expect(wide).toContain('/provider');
@@ -149,7 +149,7 @@ describe('WelcomeComponent', () => {
     setDanceView(true, 0);
     const codes = truecolorCodes(headerOf(new WelcomeComponent(appState).render(80)));
 
-    if (INTERACTIVE_HOST.id === 'openaqua-harness') {
+    if (INTERACTIVE_HOST.id === 'ariadne-buddy') {
       expect(codes.size).toBeLessThanOrEqual(2);
     } else {
       expect(codes.size).toBeGreaterThanOrEqual(5);

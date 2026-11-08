@@ -48,7 +48,7 @@ const MODEL_SWITCH_CACHE_WARNING =
 const EFFORT_SWITCH_CACHE_WARNING =
   'Note: Switching effort invalidates the existing prompt cache. Use /new to avoid extra token costs.';
 const NO_MODELS_CONFIGURED_HINT =
-  INTERACTIVE_HOST.id === 'openaqua-harness'
+  INTERACTIVE_HOST.id === 'ariadne-buddy'
     ? 'Run /provider to add a model from a provider catalog.'
     : 'Run /login to sign in to Kimi, or /provider to add another provider from a model catalog.';
 
