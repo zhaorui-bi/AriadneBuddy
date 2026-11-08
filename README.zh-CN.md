@@ -35,6 +35,8 @@
 [license]: https://img.shields.io/badge/License-MIT-4B607C?style=flat-square
 [license-file]: ./LICENSE
 
+<p align="center"><sub>Beta 候选版 · v0.1.0-beta.1</sub></p>
+
 <p align="center">
   <img src="./docs/images/workbench.png" width="840" alt="AriadneBuddy Web 工作台 — 羊皮纸与爱琴海蓝、女神线稿、品牌下的希腊回纹">
 </p>

@@ -35,6 +35,8 @@
 [license]: https://img.shields.io/badge/License-MIT-4B607C?style=flat-square
 [license-file]: ./LICENSE
 
+<p align="center"><sub>Beta · v0.1.0-beta.1</sub></p>
+
 <p align="center">
   <img src="./docs/images/workbench.png" width="840" alt="The AriadneBuddy web workbench — parchment and aegean blue, the goddess mark, a Greek-key meander under the brand">
 </p>
