@@ -50,7 +50,7 @@ try {
     'harness/backend/ariadne_cli.py',
     'web-ui/index.html',
     'web-ui/favicon.ico',
-    'licenses/ARIADNE_HARNESS_LICENSE',
+    'licenses/ARIADNE_BUDDY_LICENSE',
     'licenses/KIMI_CODE_LICENSE',
     'licenses/ARIADNE_UPSTREAM_LICENSE',
     'licenses/THIRD_PARTY_NOTICES.md',
