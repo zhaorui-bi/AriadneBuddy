@@ -11,7 +11,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -32,7 +32,7 @@ for (const [label, target] of [
   assert.ok(existsSync(target), `${label} not found: ${target}`);
 }
 
-const scratch = mkdtempSync(path.join(path.join(path.tmpdir ??= '/tmp'), 'ariadne-real-demo-'));
+const scratch = mkdtempSync(path.join(tmpdir(), 'ariadne-real-demo-'));
 const requestFile = path.join(scratch, 'nomination-request.json');
 
 const env = { ...process.env };

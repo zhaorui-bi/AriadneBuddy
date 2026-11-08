@@ -1,7 +1,8 @@
 """Install the official Ariadne mark as the AriadneBuddy brand (build/logo.png).
 
-The canonical mark is the user-supplied official Ariadne logo (a black line
-drawing on a white canvas, ~296x424). This script copies it into place so that
+The canonical mark is the left portion of the official Ariadne logo (the
+goddess line drawing — jeweled crown, crescent-and-stars halo, swirling hair —
+black line art on a white canvas). This script copies it into place so that
 scripts/make_icons.py can remove the white canvas and compose the parchment
 application tiles (black-figure pottery register) from the transparent mark.
 

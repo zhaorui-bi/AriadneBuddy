@@ -14,6 +14,10 @@
   <a href="./docs/ARCHITECTURE.md">Architecture</a>
 </p>
 
+<p align="center">
+  <img src="./docs/images/workbench.png" width="860" alt="The AriadneBuddy web workbench — parchment and aegean blue, the Ariadne goddess mark, a Greek-key meander under the brand">
+</p>
+
 ---
 
 ## Why this exists

@@ -14,6 +14,10 @@
   <a href="./docs/ARCHITECTURE.md">架构</a>
 </p>
 
+<p align="center">
+  <img src="./docs/images/workbench.png" width="860" alt="AriadneBuddy Web 工作台 — 羊皮纸与爱琴海蓝、Ariadne 女神线稿、品牌下的希腊回纹">
+</p>
+
 ---
 
 ## 为什么做这个软件
