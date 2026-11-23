@@ -48,17 +48,51 @@ records the engine backend, and probes it.
 npm start                           # Electron desktop app
 ```
 
-In the Web UI, ask for a complete discovery study, e.g. *“用 Ariadne 引擎对
+Start in Chat with a research question or attach the files to inspect. AriadneBuddy
+uses available tools and reports their findings, sources, and output links in the
+conversation. For a complete discovery study, ask *“用 Ariadne 引擎对
 input/all_tps.fasta 做 cembranoid CeeSs 提名，走完整闭环”*. The agent loads the
 `ariadne` skill, freezes a nomination request, and walks the gated loop — you
 approve hypotheses, the nominated shortlist, and the iterate/conclude decision.
+
+Select a research task from the sidebar session list to see its current progress,
+results, and review actions. Expand **Activity and files** for jobs, verified artifacts,
+and the timeline. Find cancelled tasks under **Archived tasks** in the same sidebar.
+Open AFPK sessions through their direct session links.
+
+The task list reads from the Web server's launch workspace. Start the server
+from the same project as the task, or set `ARIADNE_WORKDIR` and
+`ARIADNE_JOBS_DIR` consistently when using custom locations.
+For older MCP tasks created with a custom `ARIADNE_WORKDIR`, set
+`ARIADNE_JOBS_DIR` to the directory containing the existing task records.
+
+Under **Activity and files → Compute**, select **Stop job** for the current
+running assignment and confirm. The task retains its request, prior evidence, and
+job history. Use **Retry job** on the latest failed or stopped job to launch another
+attempt for the same stage and request revision within the job budget; the new
+attempt links to the original job.
+
+To end a research task, choose **Cancel research task** beside the task title, give a
+reason, and confirm. Tasks awaiting review or handoff can be cancelled. A cancelled
+task stays available under **Archived tasks** for its artifacts, jobs, and review
+records.
+
+In an AFPK session, expand **AFPK evidence comparison** to read the three-model
+scores per sequence, this run's original AFPK-finder clustering, the published
+scores, and imported cluster records. See the
+[molluscan case](../examples/cases/AFPK_MOLLUSC.md).
+
+The desk has its own keyboard contract: `/` focuses the sequence search, `r` reloads
+the task, `Escape` dismisses a job-cancellation confirmation, and the arrow keys move
+between the Compute, Artifacts, and Trajectory tabs. See
+[Keyboard](./KEYBOARD.md).
 
 ## 6. Model-free task control
 
 ```bash
 ./bin/ariadnebuddy research create  --input request.json
 ./bin/ariadnebuddy research advance --id research_xxxx
-./bin/ariadnebuddy research respond --input respond.json --id research_xxxx
+./bin/ariadnebuddy research respond --input respond.json
 ```
 
 `request.json`:

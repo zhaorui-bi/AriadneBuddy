@@ -18,6 +18,7 @@ import { DatabaseSync } from 'node:sqlite';
 
 import { atomicWriteJson } from '../fs-utils';
 import { resolveUserPath } from '../paths';
+import { AFPK_OPERATION, AFPK_TOOL, AFPK_WORKFLOW, afpkRequest, finderIdentity, resolveAfpkRuntime, validateAfpkReport } from './afpk';
 import { resolveAriadneBackend, runBackend, type AriadneBackend } from './backend';
 import { cancelJob, getJob, readJobRunManifest, startJob, type JobSnapshot } from './jobs';
 import { createEngineeringJobRequest, type JsonValue } from './provenance';
@@ -64,7 +65,7 @@ export interface ResearchAttention {
   createdAt: string;
   details?: Record<string, JsonValue>;
   resolvedAt?: string;
-  resolution?: { action: ResearchResponse; reason: string; authority: 'caller-declared' };
+  resolution?: { action: ResearchResponse | 'cancel'; reason: string; authority: 'caller-declared' };
   reconciliation?: { jobId: string; status: string; authority: 'system-observed' };
 }
 
@@ -106,6 +107,8 @@ export interface ResearchTask {
   schemaVersion: 1;
   kind: 'ariadne.research-task';
   id: string;
+  workflow?: typeof AFPK_WORKFLOW;
+  deskLaunch?: true;
   requestId: string;
   requestSha256: string;
   objective: string;
@@ -196,54 +199,101 @@ const AGENT_STAGE_PROMPT: Record<AgentStage, string> = {
   experiment: 'Deposit an experimental-design JSON artifact (designs per nominated candidate: system, construct, assay, controls, decision criteria).',
   validation: 'Deposit a validation-record JSON artifact (records with outcome supported/refuted/inconclusive, measurements, interpretation).',
 };
+const DESK_STAGE_ROLES: Record<AgentStage | JobStage, string> = {
+  literature: 'Literature Surveyor',
+  hypothesis: 'Hypothesis Architect',
+  pathway: 'Pathway Reconstructor',
+  discovery: 'Nomination Steward',
+  filtering: 'Nomination Steward',
+  nomination: 'Nomination Steward',
+  audit: 'Nomination Steward',
+  experiment: 'Experimental Designer',
+  validation: 'Validation Interpreter',
+};
 const LIMITATIONS = [
   'This workflow supports computational candidate nomination with auditable evidence, not experimental proof of function or product formation.',
   'HMM scores, ESM probabilities, and nearest-reference distances are screening signals; heterologous expression and product confirmation remain necessary.',
   'Request and output fingerprints do not freeze remote model behavior, ESM checkpoint provenance, or reference-database completeness.',
   'The mandate limits backend job submissions, not remote API tokens, monetary cost, or elapsed time.',
 ];
+const AFPK_LIMITATIONS = [
+  'The KS screen gives a putative enzyme-family assignment for pre-extracted KS domains. It does not establish organismal origin, enzyme function, or product identity.',
+  'The FAS I score window is tied to the selected profiles and dataset. Domain architecture, taxonomic QC, and phylogenetic evidence require independent assessment.',
+  'New and published AFPK-finder clusters are separate evidence. Cluster numbers are specific to a run, and the three-profile comparison supplies the shortlist.',
+];
+
+function researchLimitations(workflow: ResearchTask['workflow']): string[] {
+  return [...(workflow === AFPK_WORKFLOW ? AFPK_LIMITATIONS : LIMITATIONS)];
+}
 
 export function createResearchTask(ctx: ResearchContext, input: {
   requestId: string; objective: string; requestFile: string; topK?: number; maxJobs?: number;
 }): ResearchTask {
+  const workDir = currentWorkDir(ctx);
+  const query = readJson(resolveInput(input.requestFile, workDir), MAX_QUERY_BYTES);
+  return registerResearchTask(ctx, input, workDir, query);
+}
+
+export function createAfpkDeskTask(ctx: ResearchContext, input: { requestId: string; objective: string }, query: unknown): ResearchTask {
+  const workDir = currentWorkDir(ctx);
+  return registerResearchTask(ctx, input, workDir, deskAfpkRequest(workDir, query), true);
+}
+
+export function readAfpkDeskRequest(ctx: ResearchContext, file: string) {
+  const workDir = currentWorkDir(ctx);
+  return deskAfpkRequest(workDir, readJson(deskProjectFile(workDir, file), MAX_QUERY_BYTES));
+}
+
+function registerResearchTask(ctx: ResearchContext, input: {
+  requestId: string; objective: string; topK?: number; maxJobs?: number;
+}, workDir: string, query: Record<string, unknown>, deskLaunch?: true): ResearchTask {
   const requestId = text(input.requestId, 'requestId', 256);
   const objective = text(input.objective, 'objective', 8_000);
   const topK = integer(input.topK ?? 5, 'topK', 1, 10);
   const maxJobs = integer(input.maxJobs ?? 6, 'maxJobs', 1, 16);
-  const workDir = currentWorkDir(ctx);
-  const query = readJson(resolveInput(input.requestFile, workDir), MAX_QUERY_BYTES);
   validateRequest(query);
+  const workflow = query['workflow'] === AFPK_WORKFLOW ? AFPK_WORKFLOW : undefined;
   const queryText = `${JSON.stringify(query, null, 2)}\n`;
   const id = `research_${hash(canonical({ requestId, workDir })).slice(0, 24)}`;
   const initialQuerySha256 = hash(canonical(query));
-  const requestSha256 = hash(canonical({ requestId, objective, workDir, topK, maxJobs, initialQuerySha256 }));
+  const requestSha256 = hash(canonical({ requestId, objective, workDir, topK, maxJobs, initialQuerySha256, deskLaunch }));
   const paths = taskPaths(ctx, id, true);
-  const release = acquireLock(paths, id);
-  try {
+  const registered = (): ResearchTask | undefined => {
     const previous = readTask(paths, ctx);
     if (previous !== undefined) {
       if (previous.requestSha256 !== requestSha256) {
         throw new Error('requestId already identifies a different research mandate or request; use a new requestId.');
       }
       verifyRevision(previous, paths);
-      return previous;
     }
+    return previous;
+  };
+  if (deskLaunch === true) {
+    const previous = registered();
+    if (previous !== undefined) return previous;
+  }
+  const release = acquireLock(paths, id);
+  try {
+    const previous = registered();
+    if (previous !== undefined) return previous;
     privateDirectory(paths.dir);
     privateDirectory(paths.artifacts);
     const queryPath = path.join(paths.artifacts, 'request-1.json');
     atomicWriteJson(queryPath, query);
     const now = new Date().toISOString();
     const task: ResearchTask = {
-      schemaVersion: 1, kind: 'ariadne.research-task', id, requestId, requestSha256, objective,
+      schemaVersion: 1, kind: 'ariadne.research-task', id, requestId, requestSha256, objective, workflow, deskLaunch,
       version: 1, status: 'open', stage: 'readiness', nextAction: 'Call advance to check runtime readiness.',
       createdAt: now, updatedAt: now, iteration: 1,
       mandate: { workDir, jobsRoot: path.resolve(ctx.jobsRoot), outputDir: paths.artifacts,
-        allowedOperations: [...OPERATIONS], topK, maxJobs, initialQuerySha256 },
+        allowedOperations: workflow === AFPK_WORKFLOW ? [AFPK_OPERATION] : [...OPERATIONS], topK, maxJobs, initialQuerySha256 },
       queryRevisions: [{ revision: 1, path: queryPath, sha256: hash(queryText), createdAt: now, reason: 'Initial caller-supplied nomination request.' }],
       stageArtifacts: [], nomination: {}, assignments: [], attention: [], events: [], eventCount: 0, eventsTruncated: false,
-      scientificOutcome: { status: 'pending', limitations: [...LIMITATIONS] },
+      scientificOutcome: { status: 'pending', limitations: researchLimitations(workflow) },
     };
-    event(task, 'created', 'Registered a bounded scientific-discovery mandate; no backend operation has run.');
+    event(task, 'created', deskLaunch
+      ? 'The caller requested a bounded AFPK screen from the Research Desk. No backend operation has run.'
+      : 'Registered a bounded scientific-discovery mandate; no backend operation has run.');
     atomicWriteJson(paths.record, task);
     return task;
   } finally { release(); }
@@ -260,6 +310,10 @@ export function listResearchTasks(ctx: ResearchContext, options: {
   if (options.status !== undefined && !['open', 'running', 'waiting', 'ready', 'cancelled'].includes(options.status)) {
     throw new Error('Invalid research status filter.');
   }
+  return researchTaskInventory(ctx).filter((task) => options.status === undefined || task.status === options.status).slice(0, limit);
+}
+
+function researchTaskInventory(ctx: ResearchContext): ResearchTask[] {
   const root = path.join(path.resolve(ctx.jobsRoot), 'research');
   if (!existsSync(root)) return [];
   regularDirectory(root);
@@ -268,9 +322,253 @@ export function listResearchTasks(ctx: ResearchContext, options: {
   if (entries.length > 10_000) throw new Error('Research task inventory exceeds 10000 entries.');
   for (const id of entries.filter((entry) => TASK_ID.test(entry))) {
     const task = readTask(taskPaths(ctx, id, false), ctx, true);
-    if (task !== undefined && (options.status === undefined || task.status === options.status)) tasks.push(task);
+    if (task !== undefined) tasks.push(task);
   }
-  return tasks.toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, limit);
+  return tasks.toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+}
+
+export interface ResearchDeskArtifact {
+  id: string;
+  label: string;
+  kind: 'request' | 'stage' | 'engine';
+  stage?: ResearchStage;
+  role?: string;
+  iteration?: number;
+  queryRevision?: number;
+  sha256: string;
+}
+
+export function listResearchDeskTasks(ctx: ResearchContext) {
+  return researchTaskInventory(ctx).map((task) => deskTaskSummary(task, task.objective.slice(0, 512)));
+}
+
+export function pendingAfpkDeskTasks(ctx: ResearchContext): string[] {
+  return researchTaskInventory(ctx).filter(needsAfpkDeskObservation).map((task) => task.id);
+}
+
+export function needsAfpkDeskObservation(task: ResearchTask): boolean {
+  return task.workflow === AFPK_WORKFLOW && (task.status === 'running' ||
+    (task.deskLaunch === true && task.status === 'open' && task.assignments.length === 0 &&
+      task.queryRevisions.length === 1 && (task.stage === 'readiness' || task.stage === 'discovery')));
+}
+
+export async function resumeAfpkDeskTask(ctx: ResearchContext, input: { taskId: string; expectedVersion: number }): Promise<ResearchTask> {
+  return mutateTask(ctx, input.taskId, input.expectedVersion, async (task, paths) => {
+    if (task.workflow !== AFPK_WORKFLOW || task.deskLaunch !== true) throw new Error('This AFPK task was created outside the Research Desk.');
+    const gate = deskReadinessRetry(task);
+    if (gate === undefined) {
+      if (!needsAfpkDeskObservation(task)) throw new Error('This research task has no computation ready to resume.');
+      return task;
+    }
+    resolveAttention(gate, 'retry', 'The caller requested another runtime check in Research Desk.');
+    task.status = 'open';
+    event(task, 'response', 'The caller requested another AFPK runtime check in Research Desk.');
+    return saveTask(task, paths);
+  });
+}
+
+function deskReadinessRetry(task: ResearchTask): ResearchAttention | undefined {
+  if (task.deskLaunch !== true || task.status !== 'waiting' || task.stage !== 'readiness' || task.assignments.length > 0) return undefined;
+  return task.attention.find((item) => item.status === 'open' && item.kind === 'environment_readiness' && item.allowedActions.includes('retry'));
+}
+
+export function getResearchDeskTask(ctx: ResearchContext, taskId: string) {
+  const task = readTask(taskPaths(ctx, taskId, false), ctx, true);
+  if (task === undefined) return undefined;
+  const active = currentUnconsumedAssignment(task);
+  const observed = active === undefined ? undefined : getJob(ctx.jobsRoot, active.jobId);
+  const verified = active !== undefined && observed !== undefined && matchesResearchAssignment(ctx, task, active, observed);
+  const canCancel = verified && observed.status === 'running' && canCancelAssignment(task);
+  const canRetry = verified && isRetryableJob(observed) && canRetryAssignment(task);
+  const budgetAvailable = task.assignments.length < task.mandate.maxJobs;
+  const artifacts = deskArtifacts(task);
+  const afpkReport = task.workflow === AFPK_WORKFLOW ? artifacts.findLast(({ record }) =>
+    'jobId' in record && record.queryRevision === currentRevision(task).revision) : undefined;
+  const afpkReview = afpkReport && 'jobId' in afpkReport.record && afpkReport.record.output === task.scientificOutcome.reportFile
+    ? task.attention.findLast((item) => item.kind === 'afpk_nomination_review') : undefined;
+
+  return {
+    ...deskTaskSummary(task, task.objective),
+    canCancelTask: task.status !== 'cancelled',
+    canResume: deskReadinessRetry(task) !== undefined,
+    autoProgress: task.deskLaunch === true && needsAfpkDeskObservation(task),
+    afpkEvidence: afpkReport ? { artifactId: afpkReport.artifact.id, attentionId: afpkReview?.id } : undefined,
+    version: task.version,
+    nextAction: task.nextAction,
+    scientificOutcome: {
+      status: task.scientificOutcome.status,
+      auditStatus: task.scientificOutcome.auditStatus,
+      limitations: task.scientificOutcome.limitations,
+    },
+    jobsUsed: task.assignments.length,
+    maxJobs: task.mandate.maxJobs,
+    attention: task.attention.map((item) => ({
+      id: item.id,
+      kind: item.kind,
+      stage: item.stage,
+      status: item.status,
+      message: item.message,
+      allowedActions: task.status === 'cancelled' ? [] : item.allowedActions,
+      createdAt: item.createdAt,
+      resolvedAt: item.resolvedAt,
+      resolution: item.resolution === undefined ? undefined : {
+        action: item.resolution.action,
+        reason: item.resolution.reason,
+        authority: item.resolution.authority,
+      },
+    })),
+    assignments: task.assignments.map((entry) => ({
+      id: entry.id,
+      stage: entry.stage,
+      role: DESK_STAGE_ROLES[entry.stage],
+      jobId: entry.jobId,
+      status: entry === active ? (observed?.status ?? entry.status) : entry.status,
+      canCancel: entry === active && canCancel,
+      canRetry: entry === active && canRetry && budgetAvailable,
+      retryUnavailable: entry === active && canRetry && !budgetAvailable ? 'budget_exhausted' as const : undefined,
+      queryRevision: entry.queryRevision,
+      createdAt: entry.createdAt,
+      finishedAt: entry === active ? (observed?.finishedAt ?? entry.finishedAt) : entry.finishedAt,
+      retryOf: entry.retryOf,
+      requestSha256: entry.requestSha256,
+      resultSha256: entry.resultSha256,
+      outputSha256: entry.outputSha256,
+      consumed: entry.consumed,
+      notStarted: entry.notStarted,
+    })),
+    artifacts: artifacts.map(({ artifact }) => artifact),
+    events: task.events.map(({ sequence, at, type, stage, detail }) => ({ sequence, at, type, stage, detail })),
+    eventsTruncated: task.eventsTruncated,
+  };
+}
+
+export function cancelResearchAssignment(ctx: ResearchContext, input: {
+  taskId: string; jobId: string; expectedVersion: number;
+}): Promise<ResearchTask> {
+  return mutateTask(ctx, input.taskId, input.expectedVersion, async (task, paths) => {
+    const assignment = currentUnconsumedAssignment(task);
+    if (assignment === undefined || assignment.jobId !== input.jobId || !canCancelAssignment(task)) {
+      throw new Error('This job is no longer the active assignment for the research task.');
+    }
+    const job = getJob(ctx.jobsRoot, assignment.jobId);
+    if (job?.status === 'running') {
+      if (!matchesResearchAssignment(ctx, task, assignment, job)) {
+        throw new Error('The running job could not be verified against this research task.');
+      }
+      await cancelJob(ctx.jobsRoot, assignment.jobId);
+    }
+    observeAssignment(ctx, task, paths, assignment);
+    return task;
+  });
+}
+
+export function retryResearchAssignment(ctx: ResearchContext, input: {
+  taskId: string; jobId: string; expectedVersion: number;
+}): Promise<ResearchTask> {
+  return mutateTask(ctx, input.taskId, input.expectedVersion, async (task, paths) => {
+    const assignment = currentUnconsumedAssignment(task);
+    if (assignment === undefined || assignment.jobId !== input.jobId || !canRetryAssignment(task)) {
+      throw new Error('This job is no longer the current attempt eligible for retry.');
+    }
+    if (task.assignments.length >= task.mandate.maxJobs) throw new Error('The research task has used its job budget.');
+    const job = getJob(ctx.jobsRoot, assignment.jobId);
+    if (job === undefined || !isRetryableJob(job) || !matchesResearchAssignment(ctx, task, assignment, job)) {
+      throw new Error('Retry requires a verified failed or cancelled engine job.');
+    }
+    verifyRevision(task, paths);
+    if (needsEsmDecision(task)) throw new Error('An explicit ESM scoring decision is required before nomination.');
+
+    // A job can finish between Desk refreshes, before the controller records its failure.
+    if (!task.attention.some((item) => isExecutionRetry(item, assignment.stage))) {
+      observeAssignment(ctx, task, paths, assignment);
+    }
+    const gates = task.attention.filter((item) => item.status === 'open');
+    const gate = gates[0];
+    if (gates.length !== 1 || gate === undefined || !isExecutionRetry(gate, assignment.stage)) {
+      throw new Error('The research task no longer has a single retry decision for this job.');
+    }
+    assignment.consumed = true;
+    resolveAttention(gate, 'retry', 'Retry requested from the Research Desk.');
+    event(task, 'response', `Retry requested for ${assignment.jobId} from the Research Desk.`);
+    // launchAssignment persists the retry decision together with the new reserved job ID.
+    await launchAssignment(ctx, task, paths, assignment.stage);
+    return task;
+  });
+}
+
+export function readResearchDeskArtifact(ctx: ResearchContext, taskId: string, artifactId: string) {
+  const paths = taskPaths(ctx, taskId, false);
+  const task = readTask(paths, ctx, true);
+  if (task === undefined) return undefined;
+  const selected = deskArtifacts(task).find(({ artifact }) => artifact.id === artifactId);
+  if (selected === undefined) return undefined;
+
+  const { artifact, record } = selected;
+  const content = 'jobId' in record
+    ? readVerifiedAssignment(ctx, task, paths, record)
+    : readFrozenArtifact(paths, record);
+  return { artifact, content };
+}
+
+function deskTaskSummary(task: ResearchTask, objective: string) {
+  return {
+    id: task.id,
+    workflow: task.workflow,
+    objective,
+    status: task.status,
+    waitingReason: task.status === 'waiting' || task.status === 'open'
+      ? task.attention.find((item) => item.status === 'open')?.kind
+      : undefined,
+    stage: task.stage,
+    iteration: task.iteration,
+    updatedAt: task.updatedAt,
+    scientificStatus: task.scientificOutcome.status,
+  };
+}
+
+function deskArtifacts(task: ResearchTask): {
+  artifact: ResearchDeskArtifact;
+  record: ResearchQueryRevision | StageArtifact | ResearchAssignment;
+}[] {
+  return [
+    ...task.queryRevisions.map((record) => ({
+      record,
+      artifact: {
+        id: `request-${String(record.revision)}`,
+        label: 'Research request',
+        kind: 'request' as const,
+        queryRevision: record.revision,
+        sha256: record.sha256,
+      },
+    })),
+    ...task.stageArtifacts.map((record) => ({
+      record,
+      artifact: {
+        id: `stage-${String(record.iteration)}-${record.stage}-${record.sha256.slice(0, 16)}`,
+        label: `${record.stage[0]!.toUpperCase()}${record.stage.slice(1)} record`,
+        kind: 'stage' as const,
+        stage: record.stage,
+        role: DESK_STAGE_ROLES[record.stage],
+        iteration: record.iteration,
+        sha256: record.sha256,
+      },
+    })),
+    ...task.assignments.flatMap((record) => {
+      if (record.status !== 'succeeded' || !record.consumed || record.outputSha256 === undefined) return [];
+      return [{
+        record,
+        artifact: {
+          id: `engine-${record.id}`,
+          label: task.workflow === AFPK_WORKFLOW ? 'AFPK KS screening and nomination' : `${record.stage[0]!.toUpperCase()}${record.stage.slice(1)} result`,
+          kind: 'engine' as const,
+          stage: record.stage,
+          role: DESK_STAGE_ROLES[record.stage],
+          queryRevision: record.queryRevision,
+          sha256: record.outputSha256,
+        },
+      }];
+    }),
+  ];
 }
 
 export async function advanceResearchTask(ctx: ResearchContext, input: {
@@ -297,20 +595,21 @@ export async function advanceResearchTask(ctx: ResearchContext, input: {
     if (task.attention.some((item) => item.status === 'open')) return task;
     try {
       verifyRevision(task, paths);
-      for (const previous of task.assignments.filter((entry) => entry.consumed && entry.status === 'succeeded' && entry.queryRevision === currentRevision(task).revision)) {
-        const job = getJob(ctx.jobsRoot, previous.jobId);
-        if (job === undefined || job.status !== 'succeeded') throw new Error('A previously consumed stage no longer has a verified successful job.');
-        verifiedOutput(ctx, paths, job, previous);
-      }
+      verifyDependencies(ctx, task, paths);
     }
     catch (error) {
       attention(task, 'integrity', errorMessage(error), []);
       return saveTask(task, paths);
     }
     if (task.stage === 'readiness') {
-      if (!(await ensureReady(ctx, task, paths))) return task;
-      task.stage = 'literature';
-      requestAgentArtifact(task, 'literature');
+      if (task.workflow === AFPK_WORKFLOW) {
+        if (!(await ensureAfpkReady(ctx, task, paths))) return task;
+        task.stage = 'discovery';
+      } else {
+        if (!(await ensureReady(ctx, task, paths))) return task;
+        task.stage = 'literature';
+        requestAgentArtifact(task, 'literature');
+      }
       return saveTask(task, paths);
     }
     if (task.stage === 'handoff' || task.stage === 'iteration') {
@@ -325,7 +624,7 @@ export async function advanceResearchTask(ctx: ResearchContext, input: {
       attention(task, 'budget_exhausted', 'The frozen job budget is exhausted. Create a separately authorized research task to expand scope.', []);
       return saveTask(task, paths);
     }
-    if (task.stage === 'nomination' && task.mandate.backend?.esmAvailable === false && task.nomination.esmWaived !== true) {
+    if (needsEsmDecision(task)) {
       attention(task, 'esm_unavailable',
         'ESM2 semantic scoring is unavailable in the frozen backend (torch/transformers missing). Waive it explicitly to nominate with HMM + feature-space evidence only, or amend the request.',
         ['proceed_without_esm', 'amend_request']);
@@ -362,14 +661,17 @@ export async function respondResearchTask(ctx: ResearchContext, input: {
       if (task.queryRevisions.length >= MAX_REVISIONS) throw new Error('The research request revision limit is exhausted.');
       const query = readJson(resolveInput(input.requestFile, task.mandate.workDir), MAX_QUERY_BYTES);
       validateRequest(query);
+      if ((query['workflow'] === AFPK_WORKFLOW) !== (task.workflow === AFPK_WORKFLOW)) {
+        throw new Error('A request amendment must keep the original research workflow.');
+      }
       const revision = task.queryRevisions.length + 1;
       const queryPath = path.join(paths.artifacts, `request-${String(revision)}.json`);
       atomicWriteJson(queryPath, query);
       task.queryRevisions.push({ revision, path: queryPath, sha256: fileHash(queryPath, MAX_QUERY_BYTES), createdAt: new Date().toISOString(), reason });
       if (latest !== undefined) latest.consumed = true;
       task.nomination = {};
-      task.stage = 'literature';
-      task.scientificOutcome = { status: 'pending', limitations: [...LIMITATIONS] };
+      task.stage = task.workflow === AFPK_WORKFLOW ? 'readiness' : 'literature';
+      task.scientificOutcome = { status: 'pending', limitations: researchLimitations(task.workflow) };
       for (const open of task.attention.filter((entry) => entry.status === 'open')) resolveAttention(open, input.action, reason);
     } else if (input.action === 'submit_stage') {
       if (!isAgentStage(task.stage)) throw new Error('submit_stage requires a knowledge stage (literature, hypothesis, pathway, experiment, validation).');
@@ -388,20 +690,29 @@ export async function respondResearchTask(ctx: ResearchContext, input: {
         task.stage = AGENT_STAGE_NEXT[task.stage as AgentStage];
       }
     } else if (input.action === 'approve') {
-      if (item.kind !== 'stage_review' && item.kind !== 'nomination_review') throw new Error('approve applies to a review gate.');
-      if (item.kind === 'stage_review') {
+      if (task.workflow === AFPK_WORKFLOW && item.kind === 'afpk_nomination_review') {
+        verifyAfpkReview(ctx, task, paths);
+        task.stage = 'handoff';
+        task.status = 'ready';
+        task.scientificOutcome.status = 'conditional_nomination';
+        event(task, 'handoff_ready', 'The caller accepted the putative AFPK shortlist for computational handoff.');
+      } else if (item.kind === 'stage_review') {
+        verifyStageArtifact(task, paths, 'hypothesis');
         task.stage = 'pathway';
         event(task, 'gate_passed', 'Hypotheses approved (caller-declared); pathway reconstruction may proceed.');
-      } else {
-        if (nominationAssignment(task).outputSha256 === undefined) throw new Error('No verified nomination output exists to approve.');
+      } else if (item.kind === 'nomination_review') {
+        verifyNominationReview(ctx, task, paths);
         task.stage = 'experiment';
         event(task, 'gate_passed', 'Nominated candidates approved (caller-declared); experimental design may proceed.');
-      }
+      } else throw new Error('approve applies to a review gate.');
       resolveAttention(item, input.action, reason);
     } else if (input.action === 'revise') {
-      if (item.kind !== 'stage_review') throw new Error('revise applies to a hypothesis review gate.');
-      requestAgentArtifact(task, 'hypothesis');
       resolveAttention(item, input.action, reason);
+      if (task.workflow === AFPK_WORKFLOW && item.kind === 'afpk_nomination_review') {
+        attention(task, 'afpk_revision', 'Record an amended KS request before screening a replacement shortlist.', ['amend_request']);
+      } else if (item.kind === 'stage_review') {
+        requestAgentArtifact(task, 'hypothesis');
+      } else throw new Error('revise applies to a hypothesis or AFPK shortlist review gate.');
     } else if (input.action === 'iterate') {
       if (item.kind !== 'iteration_decision') throw new Error('iterate applies to the iteration decision.');
       if (task.iteration >= MAX_ITERATIONS) throw new Error(`The iteration limit (${String(MAX_ITERATIONS)}) is exhausted; conclude or create a new task.`);
@@ -413,7 +724,7 @@ export async function respondResearchTask(ctx: ResearchContext, input: {
       event(task, 'iteration_opened', `Iteration ${String(task.iteration)} started from revised hypotheses informed by validation records.`);
     } else if (input.action === 'conclude') {
       if (item.kind !== 'iteration_decision') throw new Error('conclude applies to the iteration decision.');
-      verifyConcludeLineage(task);
+      verifyConcludeLineage(ctx, task, paths);
       resolveAttention(item, input.action, reason);
       task.stage = 'handoff';
       task.status = 'ready';
@@ -433,7 +744,7 @@ export async function respondResearchTask(ctx: ResearchContext, input: {
       if (item.kind !== 'environment_readiness' && latest !== undefined) latest.consumed = true;
       resolveAttention(item, input.action, reason);
     }
-    if (task.status !== 'ready') task.status = 'open';
+    if (task.status !== 'ready' && !(task.workflow === AFPK_WORKFLOW && input.action === 'revise')) task.status = 'open';
     event(task, 'response', `${input.action}: ${reason} (caller-declared; no independent human approval is asserted).`);
     return saveTask(task, paths);
   });
@@ -445,12 +756,18 @@ export async function cancelResearchTask(ctx: ResearchContext, input: {
   const reason = text(input.reason, 'reason', 4_000);
   return mutateTask(ctx, input.taskId, input.expectedVersion, async (task, paths) => {
     if (task.status === 'cancelled') return task;
-    if (task.status === 'ready') throw new Error('A ready research task has no execution to cancel.');
-    for (const assignment of task.assignments.filter((entry) => !entry.consumed)) {
+    const atHandoff = task.status === 'ready';
+    const unconsumed = atHandoff ? [] : task.assignments.filter((entry) => !entry.consumed);
+    for (const assignment of unconsumed) {
       if (assignment.notStarted) { assignment.consumed = true; continue; }
       let job = getJob(ctx.jobsRoot, assignment.jobId);
       if (job?.status === 'running') {
-        try { job = await cancelJob(ctx.jobsRoot, assignment.jobId); }
+        try {
+          if (!matchesResearchAssignment(ctx, task, assignment, job)) {
+            throw new Error('The running job could not be verified against this research task.');
+          }
+          job = await cancelJob(ctx.jobsRoot, assignment.jobId);
+        }
         catch (error) {
           attention(task, 'execution_unknown', `Cancellation was not confirmed: ${errorMessage(error)}`, []);
           return saveTask(task, paths);
@@ -463,10 +780,17 @@ export async function cancelResearchTask(ctx: ResearchContext, input: {
       }
       assignment.status = job.status;
       assignment.finishedAt = job.finishedAt;
+      if (job.status === 'succeeded') {
+        try { verifiedOutput(ctx, task, paths, job, assignment, {}); }
+        catch (error) { assignment.error = errorMessage(error); }
+      }
       assignment.consumed = true;
     }
+    for (const item of task.attention.filter((entry) => entry.status === 'open')) {
+      resolveAttention(item, 'cancel', reason);
+    }
+    if (!atHandoff) task.scientificOutcome.status = 'cancelled';
     task.status = 'cancelled';
-    task.scientificOutcome.status = 'cancelled';
     event(task, 'cancelled', reason);
     return saveTask(task, paths);
   });
@@ -532,12 +856,64 @@ async function ensureReady(ctx: ResearchContext, task: ResearchTask, paths: Task
   }
 }
 
+async function ensureAfpkReady(ctx: ResearchContext, task: ResearchTask, paths: TaskPaths): Promise<boolean> {
+  try {
+    const { backend, finderArgs } = resolveAfpkRuntime(ctx.env, ctx.homeDir);
+    if (backend === undefined) throw new Error('Set ARIADNE_AFPK_PYTHON to a Python interpreter with pyhmmer installed.');
+    const result = await runBackend(backend, ['--version'], {
+      cwd: task.mandate.workDir, env: ctx.env, timeoutMs: 10_000, maxOutputBytes: 4_000,
+    });
+    const version = result.stdout.trim();
+    if (result.code !== 0 || result.timedOut || result.stdoutTruncated || version === '') {
+      throw new Error(`AFPK KS backend is unavailable. Check the Python interpreter and pyhmmer. ${result.stderr.trim()}`);
+    }
+    const scientificConfiguration: Record<string, JsonValue> = {
+      method: 'three-profile-ks', adapter_sha256: largeFileHash(backend.command[1]!),
+    };
+    const request = afpkRequest.parse(readFrozenArtifact(paths, currentRevision(task)));
+    if (request.run_afpk_finder === true) {
+      if (finderArgs.length === 0) throw new Error('Configure the original AFPK-finder v1.0 checkout in afpk-finder.json or ARIADNE_AFPK_FINDER_REPO.');
+      const probe = await runBackend(backend, ['finder-identity', ...finderArgs], {
+        cwd: task.mandate.workDir, env: ctx.env, timeoutMs: 30_000, maxOutputBytes: 8_000,
+      });
+      if (probe.code !== 0 || probe.timedOut || probe.stdoutTruncated) {
+        throw new Error(`The original AFPK-finder runtime is unavailable. ${probe.stderr.trim()}`);
+      }
+      scientificConfiguration['afpk_finder_identity'] = finderIdentity.parse(parseObject(probe.stdout));
+      scientificConfiguration['afpk_finder_arguments'] = finderArgs;
+    }
+    const command = [...backend.command];
+    const sha256 = hash(canonical({ command, version, configuration: scientificConfiguration }));
+    if (task.mandate.backend !== undefined && task.mandate.backend.sha256 !== sha256) {
+      attention(task, 'configuration_drift', 'The AFPK KS adapter or Python environment changed. Create a task under the new backend identity.', []);
+      saveTask(task, paths);
+      return false;
+    }
+    if (task.mandate.backend === undefined) {
+      task.mandate.backend = { command, source: backend.source, version, esmAvailable: false, scientificConfiguration, sha256 };
+      event(task, 'readiness', request.run_afpk_finder === true
+        ? 'Confirmed the KS backend and the original AFPK-finder v1.0 runtime and release fingerprints.'
+        : 'Confirmed the AFPK KS backend and froze the adapter fingerprint.');
+    }
+    return true;
+  } catch (error) {
+    attention(task, 'environment_readiness', errorMessage(error), ['retry']);
+    saveTask(task, paths);
+    return false;
+  }
+}
+
+function assignmentTool(task: ResearchTask, stage: JobStage): string {
+  return task.workflow === AFPK_WORKFLOW ? AFPK_TOOL : STAGE_TOOL[stage];
+}
+
 async function launchAssignment(ctx: ResearchContext, task: ResearchTask, paths: TaskPaths, stage: JobStage): Promise<void> {
   const frozen = task.mandate.backend;
   if (frozen === undefined) throw new Error('Research backend identity is missing.');
   verifyDependencies(ctx, task, paths);
   const revision = currentRevision(task);
-  const operation = STAGE_OPERATION[stage];
+  const afpk = task.workflow === AFPK_WORKFLOW;
+  const operation = afpk && stage === 'discovery' ? AFPK_OPERATION : STAGE_OPERATION[stage];
   if (!task.mandate.allowedOperations.includes(operation)) throw new Error('Operation is outside the frozen research mandate.');
   const jobId = `job_${new Date().toISOString().replaceAll(/[-:.TZ]/g, '').slice(0, 14)}_${randomBytes(6).toString('hex')}`;
   const output = path.join(paths.artifacts, `${String(task.assignments.length + 1)}-${stage}.json`);
@@ -547,7 +923,30 @@ async function launchAssignment(ctx: ResearchContext, task: ResearchTask, paths:
   const requestArgs: Record<string, unknown> = { researchTaskId: task.id, assignmentId: `assignment_${String(task.assignments.length + 1)}`, queryRevision: revision.revision, output };
   let expectedRole = 'nomination-request';
   let expectedHash: string | undefined;
-  if (stage === 'discovery') {
+  if (afpk) {
+    if (frozen.scientificConfiguration['adapter_sha256'] !== largeFileHash(frozen.command[1]!)) {
+      throw new Error('The AFPK KS adapter differs from the frozen backend fingerprint.');
+    }
+    const input = task.deskLaunch === true ? deskAfpkRequest(task.mandate.workDir, request) : afpkRequest.parse(request);
+    expectedHash = revision.sha256;
+    argv.push('screen', '--request-file', revision.path, '--output', output);
+    if (input.run_afpk_finder === true) {
+      const { finderArgs } = resolveAfpkRuntime(ctx.env, ctx.homeDir);
+      if (canonical(frozen.scientificConfiguration['afpk_finder_arguments'] ?? null) !== canonical(finderArgs)) {
+        throw new Error('The original AFPK-finder configuration changed after readiness. Restore the frozen installation settings.');
+      }
+      argv.push(...finderArgs);
+    }
+    Object.assign(requestArgs, {
+      requestFile: revision.path,
+      proteins: input.input_proteins,
+      fasI: input.ks_models.fas_i,
+      fasII: input.ks_models.fas_ii,
+      pks: input.ks_models.pks,
+      clusterOutputs: input.afpk_finder_files,
+      publishedKsScores: input.published_ks_scores_file,
+    });
+  } else if (stage === 'discovery') {
     expectedHash = revision.sha256;
     argv.push('discover', '--request-file', revision.path, '--output', output, '--stage-dir', stageDir);
     Object.assign(requestArgs, { requestFile: revision.path, stageDir });
@@ -580,7 +979,7 @@ async function launchAssignment(ctx: ResearchContext, task: ResearchTask, paths:
   let spawnAttempted = false;
   try {
     const backend: AriadneBackend = { command: frozen.command, source: frozen.source };
-    const provenance = createEngineeringJobRequest({ toolName: STAGE_TOOL[stage], operation, backend, backendVersion: frozen.version, args: requestArgs, workDir: task.mandate.workDir, scientificConfiguration: frozen.scientificConfiguration });
+    const provenance = createEngineeringJobRequest({ toolName: assignmentTool(task, stage), operation, backend, backendVersion: frozen.version, args: requestArgs, workDir: task.mandate.workDir, scientificConfiguration: frozen.scientificConfiguration });
     if (provenance.inputs.some((entry) => entry.kind !== 'file' && !(entry.kind === 'directory' && entry.role === 'reference-library' && entry.integrityComplete === true))) {
       throw new Error('Research input is no longer a readable regular file (or complete reference directory).');
     }
@@ -628,6 +1027,11 @@ function observeAssignment(ctx: ResearchContext, task: ResearchTask, paths: Task
   }
   assignment.status = job.status;
   assignment.finishedAt = job.finishedAt;
+  if (job.status === 'cancelled') {
+    event(task, 'job_cancelled', `Stopped ${assignment.stage} job ${assignment.jobId}.`);
+    attention(task, 'execution_cancelled', 'The engine job is cancelled. Decide whether to retry this stage or amend the request.', ['retry', 'amend_request']);
+    saveTask(task, paths); return 'waiting';
+  }
   if (job.status !== 'succeeded') {
     attention(task, 'execution_failure', `${assignment.stage} job ${job.status}; inspect its bounded log before an explicit retry.`, ['retry', 'amend_request']);
     saveTask(task, paths); return 'waiting';
@@ -635,9 +1039,10 @@ function observeAssignment(ctx: ResearchContext, task: ResearchTask, paths: Task
   try {
     verifyRevision(task, paths);
     verifyDependencies(ctx, task, paths);
-    const payload = verifiedOutput(ctx, paths, job, assignment);
+    const payload = verifiedOutput(ctx, task, paths, job, assignment);
     assignment.consumed = true;
-    if (assignment.stage === 'discovery') consumeDiscovery(task, payload);
+    if (task.workflow === AFPK_WORKFLOW) consumeAfpkScreen(task, assignment, payload);
+    else if (assignment.stage === 'discovery') consumeDiscovery(task, payload);
     else if (assignment.stage === 'filtering') consumeFiltering(task, payload);
     else if (assignment.stage === 'nomination') consumeNomination(task, assignment, payload);
     else consumeAudit(task, assignment, payload);
@@ -648,6 +1053,22 @@ function observeAssignment(ctx: ResearchContext, task: ResearchTask, paths: Task
     assignment.consumed = false;
     attention(task, 'malformed_result', errorMessage(error), ['amend_request']);
     saveTask(task, paths); return 'waiting';
+  }
+}
+
+function consumeAfpkScreen(task: ResearchTask, assignment: ResearchAssignment, payload: Record<string, unknown>): void {
+  const candidates = payload['candidates'];
+  if (!Array.isArray(candidates)) throw new Error('AFPK shortlist is missing.');
+  task.stage = 'nomination';
+  task.nomination.nominatedCount = candidates.length;
+  task.scientificOutcome.reportFile = assignment.output;
+  task.scientificOutcome.status = candidates.length > 0 ? 'review_required' : 'blocked';
+  if (candidates.length > 0) {
+    attention(task, 'afpk_nomination_review', payload['original_afpk_finder'] === undefined
+      ? 'Review the putative AFPK shortlist against the three KS scores, anchor controls, and any published AFPK-finder evidence.'
+      : 'Review the KS scores, fresh original AFPK-finder clusters, and published evidence before deciding on the putative shortlist.', ['approve', 'revise', 'amend_request']);
+  } else {
+    attention(task, 'afpk_empty_shortlist', 'The batch produced no putative AFPK candidates. Inspect the scores and amend the request if warranted.', ['amend_request']);
   }
 }
 
@@ -781,17 +1202,50 @@ function nominationCount(task: ResearchTask): number {
 }
 
 function stageArtifactFor(task: ResearchTask, stage: AgentStage): StageArtifact | undefined {
-  return task.stageArtifacts.findLast((entry) => entry.stage === stage);
+  return task.stageArtifacts.findLast((entry) => entry.stage === stage && entry.iteration === task.iteration);
 }
 
-function verifyConcludeLineage(task: ResearchTask): void {
-  const nomination = task.assignments.findLast((entry) => entry.stage === 'nomination' && entry.status === 'succeeded' && entry.consumed);
-  const audit = task.assignments.findLast((entry) => entry.stage === 'audit' && entry.status === 'succeeded' && entry.consumed);
-  if (nomination === undefined || audit === undefined || task.scientificOutcome.auditStatus !== 'pass' || task.scientificOutcome.reportFile !== nomination.output) {
-    throw new Error('Concluding requires a verified nomination and a passing nomination audit.');
+function verifyStageArtifact(task: ResearchTask, paths: TaskPaths, stage: AgentStage): void {
+  const artifact = stageArtifactFor(task, stage);
+  if (artifact === undefined) throw new Error(`Research review requires a frozen ${stage} artifact for the current iteration.`);
+  validateStageArtifact(stage, readFrozenArtifact(paths, artifact));
+}
+
+function readFrozenArtifact(paths: TaskPaths, record: ResearchQueryRevision | StageArtifact): Record<string, unknown> {
+  contained(paths.artifacts, record.path);
+  const bytes = readRegular(record.path, MAX_QUERY_BYTES);
+  if (hash(bytes) !== record.sha256) throw new Error('The frozen research artifact differs from its recorded fingerprint.');
+  return jsonObject(bytes);
+}
+
+function verifyNominationReview(ctx: ResearchContext, task: ResearchTask, paths: TaskPaths): void {
+  const nomination = nominationAssignment(task);
+  const audit = task.assignments.findLast((entry) => entry.stage === 'audit' && entry.queryRevision === nomination.queryRevision && entry.status === 'succeeded' && entry.consumed);
+  if (audit === undefined || task.scientificOutcome.auditStatus !== 'pass' || task.scientificOutcome.reportFile !== nomination.output || task.scientificOutcome.auditFile !== audit.output) {
+    throw new Error('Research review requires a verified nomination and a passing nomination audit.');
   }
-  if (stageArtifactFor(task, 'experiment') === undefined || stageArtifactFor(task, 'validation') === undefined) {
-    throw new Error('Concluding requires frozen experimental-design and validation artifacts.');
+  readVerifiedAssignment(ctx, task, paths, nomination);
+  const result = readVerifiedAssignment(ctx, task, paths, audit, nomination);
+  if (result['status'] !== 'pass' || (result['report'] !== undefined && result['report'] !== nomination.output)) {
+    throw new Error('The verified audit does not pass for the current nomination.');
+  }
+}
+
+function verifyConcludeLineage(ctx: ResearchContext, task: ResearchTask, paths: TaskPaths): void {
+  verifyStageArtifact(task, paths, 'experiment');
+  verifyStageArtifact(task, paths, 'validation');
+  verifyNominationReview(ctx, task, paths);
+}
+
+function verifyAfpkReview(ctx: ResearchContext, task: ResearchTask, paths: TaskPaths): void {
+  const revision = currentRevision(task).revision;
+  const screened = task.assignments.findLast((entry) => entry.stage === 'discovery' && entry.queryRevision === revision && entry.consumed && entry.status === 'succeeded');
+  if (screened === undefined || screened.output !== task.scientificOutcome.reportFile) {
+    throw new Error('AFPK review requires the verified screen for the current request revision.');
+  }
+  const result = readVerifiedAssignment(ctx, task, paths, screened);
+  if (!Array.isArray(result['candidates']) || result['candidates'].length === 0 || result['candidates'].length !== task.nomination.nominatedCount) {
+    throw new Error('The verified AFPK shortlist is empty or differs from the task record.');
   }
 }
 
@@ -838,11 +1292,15 @@ function readTask(paths: TaskPaths, ctx: ResearchContext, allowForeignWorkspace 
     if (allowForeignWorkspace) return undefined;
     throw new Error('Research task belongs to a different frozen workspace.');
   }
-  if (task.mandate.outputDir !== paths.artifacts || canonical(task.mandate.allowedOperations) !== canonical(OPERATIONS)) throw new Error('Research mandate paths or allowed operations were modified.');
+  if (task.workflow !== undefined && task.workflow !== AFPK_WORKFLOW) throw new Error('Unknown research workflow.');
+  const deskLaunch = value['deskLaunch'];
+  if (deskLaunch !== undefined && (deskLaunch !== true || task.workflow !== AFPK_WORKFLOW)) throw new Error('Invalid Research Desk launch origin.');
+  const operations = task.workflow === AFPK_WORKFLOW ? [AFPK_OPERATION] : OPERATIONS;
+  if (task.mandate.outputDir !== paths.artifacts || canonical(task.mandate.allowedOperations) !== canonical(operations)) throw new Error('Research mandate paths or allowed operations were modified.');
   integer(task.mandate.maxJobs, 'stored maxJobs', 1, 16);
   integer(task.mandate.topK, 'stored topK', 1, 10);
   integer(task.iteration, 'stored iteration', 1, MAX_ITERATIONS);
-  if (task.requestSha256 !== hash(canonical({ requestId: task.requestId, objective: task.objective, workDir: task.mandate.workDir, topK: task.mandate.topK, maxJobs: task.mandate.maxJobs, initialQuerySha256: task.mandate.initialQuerySha256 }))) throw new Error('The frozen research mandate fingerprint does not match its contents.');
+  if (task.requestSha256 !== hash(canonical({ requestId: task.requestId, objective: task.objective, workDir: task.mandate.workDir, topK: task.mandate.topK, maxJobs: task.mandate.maxJobs, initialQuerySha256: task.mandate.initialQuerySha256, deskLaunch: task.deskLaunch }))) throw new Error('The frozen research mandate fingerprint does not match its contents.');
   if (task.mandate.backend !== undefined) {
     const backend = task.mandate.backend;
     if (!Array.isArray(backend.command) || backend.command.length === 0 || !backend.command.every((part) => typeof part === 'string' && part !== '') || typeof backend.version !== 'string' || typeof backend.esmAvailable !== 'boolean' || !isRecord(backend.scientificConfiguration) || backend.sha256 !== hash(canonical({ command: backend.command, version: backend.version, configuration: backend.scientificConfiguration }))) throw new Error('The frozen backend configuration identity was modified.');
@@ -857,31 +1315,76 @@ function readTask(paths: TaskPaths, ctx: ResearchContext, allowForeignWorkspace 
     contained(paths.artifacts, artifact.path);
   }
   const first = task.queryRevisions[0]!;
-  contained(paths.artifacts, first.path);
-  if (fileHash(first.path, MAX_QUERY_BYTES) !== first.sha256 || hash(canonical(readJson(first.path, MAX_QUERY_BYTES))) !== task.mandate.initialQuerySha256) throw new Error('The original research request no longer matches the frozen mandate.');
+  const original = readFrozenArtifact(paths, first);
+  if (hash(canonical(original)) !== task.mandate.initialQuerySha256 ||
+      (original['workflow'] === AFPK_WORKFLOW) !== (task.workflow === AFPK_WORKFLOW)) {
+    throw new Error('The original research request no longer matches the frozen mandate.');
+  }
   return task;
 }
 
-function verifiedOutput(ctx: ResearchContext, paths: TaskPaths, job: JobSnapshot, assignment: ResearchAssignment): Record<string, unknown> {
+function verifiedOutput(ctx: ResearchContext, task: ResearchTask, paths: TaskPaths, job: JobSnapshot, assignment: ResearchAssignment, review?: {
+  nomination?: Pick<ResearchAssignment, 'output' | 'outputSha256'>;
+}): Record<string, unknown> {
   contained(paths.artifacts, assignment.output);
   const result = readJobRunManifest(ctx.jobsRoot, job.id);
   const manifest = result?.manifest;
   if (result?.error !== undefined || manifest === undefined || manifest.result === undefined) throw new Error('A valid completion-time engineering manifest is required before consuming stage output.');
-  if (manifest.jobId !== assignment.jobId || manifest.toolName !== STAGE_TOOL[assignment.stage] || manifest.parameters.values['assignmentId'] !== assignment.id || manifest.parameters.values['queryRevision'] !== assignment.queryRevision || manifest.configuredOutput !== assignment.output || manifest.result.output.path !== assignment.output || manifest.result.output.kind !== 'file' || manifest.result.output.sha256 === undefined) throw new Error('Stage output identity does not match its durable engineering manifest.');
+  if ((review !== undefined || task.workflow === AFPK_WORKFLOW) && manifest.parameters.values['researchTaskId'] !== task.id) throw new Error('The engine manifest belongs to a different research task.');
+  const nomination = review?.nomination;
+  if (nomination !== undefined && !manifest.inputs.some((input) =>
+    input.role === 'nomination-report' && input.kind === 'file' && input.path === nomination.output && input.sha256 === nomination.outputSha256,
+  )) throw new Error('The audit manifest does not identify the current nomination artifact.');
+  if (manifest.jobId !== assignment.jobId || manifest.toolName !== assignmentTool(task, assignment.stage) || manifest.parameters.values['assignmentId'] !== assignment.id || manifest.parameters.values['queryRevision'] !== assignment.queryRevision || manifest.configuredOutput !== assignment.output || manifest.result.output.path !== assignment.output || manifest.result.output.kind !== 'file' || manifest.result.output.sha256 === undefined) throw new Error('Stage output identity does not match its durable engineering manifest.');
   if (assignment.requestSha256 !== undefined && assignment.requestSha256 !== manifest.requestSha256) throw new Error('Stage request identity changed after submission.');
   const bytes = readRegular(assignment.output, MAX_JSON_BYTES);
   if (hash(bytes) !== manifest.result.output.sha256) throw new Error('Stage output differs from its completion-time fingerprint.');
+  const payload = jsonObject(bytes);
+  if (task.workflow === AFPK_WORKFLOW) {
+    const request = task.queryRevisions.find((entry) => entry.revision === assignment.queryRevision);
+    const requestInput = manifest.inputs.find((entry) => entry.role === 'nomination-request');
+    if (request === undefined || requestInput?.sha256 !== request.sha256 || requestInput.path !== request.path) {
+      throw new Error('The AFPK job manifest does not identify the frozen screening request.');
+    }
+    const report = validateAfpkReport(payload, readFrozenArtifact(paths, request));
+    const reportedVersion = `ariadne-afpk-ks ${report.software.adapter} (pyhmmer ${report.software.pyhmmer})`;
+    if (manifest.backend.version !== reportedVersion || task.mandate.backend?.version !== reportedVersion) {
+      throw new Error('The AFPK runtime version differs from the frozen backend identity.');
+    }
+    if (report.original_afpk_finder !== undefined) {
+      const observed = canonical(finderIdentity.parse(report.original_afpk_finder));
+      if (observed !== canonical(task.mandate.backend.scientificConfiguration['afpk_finder_identity'] ?? null) ||
+        observed !== canonical(manifest.scientificConfiguration?.values['afpk_finder_identity'] ?? null)) {
+        throw new Error('The original AFPK-finder release or dependency identity differs from the frozen run.');
+      }
+    }
+    const inputHashes = Object.fromEntries(manifest.inputs.filter((entry) => entry !== requestInput).map((entry) => [entry.role, entry.sha256]));
+    if (canonical(report.inputs) !== canonical(inputHashes)) {
+      throw new Error('The AFPK backend read inputs that differ from the launch-time fingerprints.');
+    }
+  }
   assignment.requestSha256 = manifest.requestSha256;
   assignment.outputSha256 = manifest.result.output.sha256;
   assignment.resultSha256 = manifest.result.resultSha256;
-  return jsonObject(bytes);
+  return payload;
+}
+
+function readVerifiedAssignment(ctx: ResearchContext, task: ResearchTask, paths: TaskPaths, assignment: ResearchAssignment, nomination?: ResearchAssignment): Record<string, unknown> {
+  const job = getJob(ctx.jobsRoot, assignment.jobId);
+  if (job?.status !== 'succeeded') throw new Error('The recorded engine job no longer has a successful result.');
+  const checked = { ...assignment };
+  const content = verifiedOutput(ctx, task, paths, job, checked, { nomination });
+  if (checked.outputSha256 !== assignment.outputSha256 || checked.resultSha256 !== assignment.resultSha256) {
+    throw new Error('The engine result differs from the persisted research artifact fingerprint.');
+  }
+  return content;
 }
 
 function verifyDependencies(ctx: ResearchContext, task: ResearchTask, paths: TaskPaths): void {
   for (const previous of task.assignments.filter((entry) => entry.consumed && entry.status === 'succeeded' && entry.queryRevision === currentRevision(task).revision)) {
     const job = getJob(ctx.jobsRoot, previous.jobId);
     if (job === undefined || job.status !== 'succeeded') throw new Error('A previously consumed stage no longer has a verified successful job.');
-    verifiedOutput(ctx, paths, job, previous);
+    verifiedOutput(ctx, task, paths, job, previous);
   }
 }
 
@@ -893,21 +1396,27 @@ function verifyReadyTask(task: ResearchTask): void {
 }
 
 function verifyHandoff(ctx: ResearchContext, task: ResearchTask, paths: TaskPaths): void {
-  verifyReadyTask(task);
   verifyRevision(task, paths);
+  if (task.workflow === AFPK_WORKFLOW) {
+    if (task.stage !== 'handoff' || !task.attention.some((item) =>
+      item.kind === 'afpk_nomination_review' && item.resolution?.action === 'approve')) {
+      throw new Error('AFPK computational handoff is missing its recorded shortlist decision.');
+    }
+    verifyAfpkReview(ctx, task, paths);
+    return;
+  }
+  verifyReadyTask(task);
+  verifyConcludeLineage(ctx, task, paths);
   verifyDependencies(ctx, task, paths);
-  const assignment = task.assignments.findLast((entry) => entry.stage === 'audit' && entry.queryRevision === currentRevision(task).revision)!;
-  const job = getJob(ctx.jobsRoot, assignment.jobId);
-  if (job === undefined) throw new Error('Research handoff audit job is missing.');
-  const audit = verifiedOutput(ctx, paths, job, assignment);
-  if (audit['status'] !== 'pass') throw new Error('Research handoff audit did not pass.');
 }
 
 function saveTask(task: ResearchTask, paths: TaskPaths): ResearchTask {
   task.version++;
   task.updatedAt = new Date().toISOString();
   const open = task.attention.filter((item) => item.status === 'open');
-  task.nextAction = task.status === 'ready' ? 'Review the nomination report, scientific audit, provenance, and limitations before research handoff.'
+  task.nextAction = task.status === 'ready' ? (task.workflow === AFPK_WORKFLOW
+    ? 'Review the accepted KS shortlist and supporting evidence before computational handoff.'
+    : 'Review the nomination report, scientific audit, provenance, and limitations before research handoff.')
     : task.status === 'cancelled' ? 'Execution is cancelled; retained artifacts remain available.'
     : open.length > 0 ? `${open[0]!.message} Allowed responses: ${open[0]!.allowedActions.join(', ') || 'none; preserve this task for inspection'}.`
     : task.status === 'running' ? 'Call advance to observe the original job; do not submit a replacement while it is active.'
@@ -926,7 +1435,7 @@ function attention(task: ResearchTask, kind: string, message: string, allowedAct
   event(task, 'attention', `${kind}: ${message}`);
 }
 
-function resolveAttention(item: ResearchAttention, action: ResearchResponse, reason: string): void {
+function resolveAttention(item: ResearchAttention, action: ResearchResponse | 'cancel', reason: string): void {
   item.status = 'resolved'; item.resolvedAt = new Date().toISOString();
   item.resolution = { action, reason, authority: 'caller-declared' };
 }
@@ -951,6 +1460,49 @@ function currentRevision(task: ResearchTask): ResearchQueryRevision {
 
 function latestAssignment(task: ResearchTask): ResearchAssignment | undefined {
   return task.assignments.at(-1);
+}
+
+function currentUnconsumedAssignment(task: ResearchTask): ResearchAssignment | undefined {
+  const assignment = latestAssignment(task);
+  if (assignment === undefined || assignment.consumed === true || assignment.notStarted === true ||
+    task.stage !== assignment.stage || currentRevision(task).revision !== assignment.queryRevision ||
+    task.status === 'cancelled' || task.status === 'ready') return undefined;
+  return assignment;
+}
+
+function canCancelAssignment(task: ResearchTask): boolean {
+  return task.attention.every((item) => item.status !== 'open' || item.kind === 'execution_unknown');
+}
+
+function isRetryableJob(job: Pick<JobSnapshot, 'status'>): boolean {
+  return job.status === 'failed' || job.status === 'cancelled';
+}
+
+function isExecutionRetry(item: ResearchAttention, stage: ResearchStage): boolean {
+  return item.status === 'open' && item.stage === stage &&
+    (item.kind === 'execution_failure' || item.kind === 'execution_cancelled') && item.allowedActions.includes('retry');
+}
+
+function canRetryAssignment(task: ResearchTask): boolean {
+  const gates = task.attention.filter((item) => item.status === 'open');
+  return gates.length === 0 || (gates.length === 1 &&
+    (isExecutionRetry(gates[0]!, task.stage) || (gates[0]!.kind === 'execution_unknown' && gates[0]!.stage === task.stage)));
+}
+
+function needsEsmDecision(task: ResearchTask): boolean {
+  return task.workflow !== AFPK_WORKFLOW && task.stage === 'nomination' &&
+    task.mandate.backend?.esmAvailable === false && task.nomination.esmWaived !== true;
+}
+
+function matchesResearchAssignment(ctx: ResearchContext, task: ResearchTask, assignment: ResearchAssignment, job: JobSnapshot): boolean {
+  const manifest = readJobRunManifest(ctx.jobsRoot, job.id)?.manifest;
+  return manifest !== undefined && manifest.workDir === task.mandate.workDir &&
+    job.workDir === manifest.workDir && canonical(job.command) === canonical(manifest.command) &&
+    manifest.toolName === assignmentTool(task, assignment.stage) && manifest.configuredOutput === assignment.output &&
+    manifest.parameters.values['researchTaskId'] === task.id &&
+    manifest.parameters.values['assignmentId'] === assignment.id &&
+    manifest.parameters.values['queryRevision'] === assignment.queryRevision &&
+    (assignment.requestSha256 === undefined || assignment.requestSha256 === manifest.requestSha256);
 }
 
 function isAgentStage(stage: ResearchStage): stage is AgentStage {
@@ -1020,6 +1572,10 @@ function isRecord(value: unknown): value is Record<string, unknown> { return typ
 function parseObject(value: string): Record<string, unknown> | undefined { try { const parsed: unknown = JSON.parse(value); return isRecord(parsed) ? parsed : undefined; } catch { return undefined; } }
 function boundedJson(value: unknown): JsonValue { const rendered = canonical(value); return Buffer.byteLength(rendered) <= 32_000 ? JSON.parse(rendered) as JsonValue : { truncated: true, note: 'Inspect the verified stage output for the complete issue list.' }; }
 function validateRequest(query: Record<string, unknown>): void {
+  if (query['workflow'] === AFPK_WORKFLOW) {
+    afpkRequest.parse(query);
+    return;
+  }
   if (typeof query['target_class'] !== 'string' || query['target_class'].trim() === '') throw new Error('Nomination request must declare target_class (e.g. cembrene-class TPS / CeeSs).');
   if (!Array.isArray(query['input_proteins']) || query['input_proteins'].length === 0 || !query['input_proteins'].every((value: unknown) => typeof value === 'string' && value.trim() !== '')) throw new Error('Nomination request must declare input_proteins as a non-empty array of FASTA paths.');
   if (typeof query['query_hmm'] !== 'string' || query['query_hmm'].trim() === '') throw new Error('Nomination request must declare query_hmm (an HMMER3 profile path).');
@@ -1063,6 +1619,33 @@ function validateStageArtifact(stage: ResearchStage, artifact: Record<string, un
 function text(value: unknown, name: string, maxLength: number): string { if (typeof value !== 'string' || value.trim() === '' || value.length > maxLength) throw new Error(`${name} must be nonempty text of at most ${String(maxLength)} characters.`); return value.trim(); }
 function integer(value: number, name: string, min: number, max: number): number { if (!Number.isSafeInteger(value) || value < min || value > max) throw new Error(`${name} must be an integer from ${String(min)} to ${String(max)}.`); return value; }
 function currentWorkDir(ctx: ResearchContext): string { const dir = resolveUserPath(ctx.env['ARIADNE_WORKDIR'] ?? process.cwd()); if (!lstatSync(dir).isDirectory()) throw new Error('Research workspace must be a regular directory.'); return realpathSync(dir); }
+function deskProjectFile(workDir: string, value: string): string {
+  const file = text(value, 'project file', 8_192);
+  const absolute = path.resolve(workDir, file);
+  const relative = path.relative(workDir, absolute);
+  if (path.isAbsolute(file) || file.startsWith('~') || relative === '' || relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    throw new Error('Select a file inside the current Research Desk workspace using a relative path.');
+  }
+  try {
+    if (lstatSync(absolute).isFile() && realpathSync(absolute) === absolute) return absolute;
+  } catch {
+    throw new Error(`The project file is unavailable: ${relative}`);
+  }
+  throw new Error(`Select a regular project file without symbolic links: ${relative}`);
+}
+
+function deskAfpkRequest(workDir: string, query: unknown) {
+  const parsed = afpkRequest.parse(query);
+  const check = (file: string): string => path.relative(workDir, deskProjectFile(workDir, file));
+  const models = parsed.ks_models;
+  return {
+    ...parsed,
+    input_proteins: parsed.input_proteins.map(check),
+    ks_models: { fas_i: check(models.fas_i), fas_ii: check(models.fas_ii), pks: check(models.pks) },
+    afpk_finder_files: parsed.afpk_finder_files?.map(check),
+    published_ks_scores_file: parsed.published_ks_scores_file === undefined ? undefined : check(parsed.published_ks_scores_file),
+  };
+}
 function resolveInput(value: string, workDir: string): string { const input = text(value, 'artifact or request file', 8_192); return input === '~' || input.startsWith('~/') || input.startsWith('~\\') ? resolveUserPath(input) : path.resolve(workDir, input); }
 function privateDirectory(dir: string): void { if (!existsSync(dir)) mkdirSync(dir, { recursive: true, mode: 0o700 }); regularDirectory(dir); chmodSync(dir, 0o700); }
 function regularDirectory(dir: string): void { const stat = lstatSync(dir); if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error('Research storage directory must not be a symbolic link or non-directory.'); }

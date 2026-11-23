@@ -52,7 +52,7 @@ export const RESEARCH_TOOLS: readonly AriadneTool[] = [
     name: 'ariadne_research_create',
     title: 'Create a scientific-discovery research task',
     description:
-      'Freeze a nomination-request JSON and a declared objective into a durable research task without starting a backend job. The task walks the closed scientific loop: literature review, hypothesis generation, pathway reconstruction, deterministic nomination (HMM retrieval → filtering → ESM2 semantic scoring → feature-space structure retrieval), nomination audit, experimental design, validation interpretation, and bounded iteration. Reuse requestId only for the same request. The caller declaration is not verified human approval.',
+      'Freeze a nomination-request JSON and an objective into a durable task without starting a backend job. Use the default TPS/CeeSs workflow for the full scientific loop. Requests with workflow "afpk-ks" use a three-profile KS batch screen over pre-extracted protein domains. Set run_afpk_finder to true to call the configured official v1.0 release and compare fresh clusters alongside optional published evidence for shortlist review. Reuse requestId only for the same request. The caller declaration is not verified human approval.',
     schema: z.object({
       requestId: z.string().trim().min(1).max(256),
       objective: z.string().trim().min(1).max(8_000),
@@ -86,6 +86,7 @@ export const RESEARCH_TOOLS: readonly AriadneTool[] = [
     execute(args, ctx) {
       const tasks = listResearchTasks(ctx, args).map((task) => ({
         id: task.id,
+        workflow: task.workflow,
         version: task.version,
         status: task.status,
         stage: task.stage,
@@ -115,7 +116,7 @@ export const RESEARCH_TOOLS: readonly AriadneTool[] = [
     name: 'ariadne_research_advance',
     title: 'Advance a scientific-discovery research task',
     description:
-      'Reconcile the current durable assignment and advance one research stage when its gate allows. Knowledge stages (literature, hypothesis, pathway, experiment, validation) open a stage-input attention for the expert agent to deposit an artifact; compute stages (discovery, filtering, nomination, audit) launch deterministic engine jobs. Reuses a running job instead of relaunching it. No automatic resubmission is included.',
+      'Reconcile the current durable assignment and advance one research stage when its gate allows. TPS/CeeSs knowledge stages open a stage-input attention and compute stages launch deterministic jobs. AFPK KS tasks submit one three-profile screen and open a shortlist review when candidates are present. Reuses a running job instead of relaunching it. No automatic resubmission is included.',
     schema: z.object({ taskId, expectedVersion: version.optional() }).strict(),
     execute: (args, ctx) => advanceResearchTask(ctx, args),
   }),
@@ -139,7 +140,7 @@ export const RESEARCH_TOOLS: readonly AriadneTool[] = [
     name: 'ariadne_research_cancel',
     title: 'Cancel a scientific-discovery research task',
     description:
-      'Request cancellation of a research task and stop its active job. Confirmed cancellation retains inputs, assignments, artifacts, and history, and cannot resume through advance. If the original job state cannot be confirmed, preserve it as waiting for inspection instead of claiming cancellation succeeded.',
+      'Request cancellation of a research task, including a task ready for handoff. Stop any active job. Confirmed cancellation retains inputs, assignments, artifacts, and decisions, including the recorded scientific outcome at handoff. A cancelled task cannot resume through advance. If the original job state cannot be confirmed, the task waits for inspection.',
     schema: z.object({ taskId, expectedVersion: version.optional(), reason }).strict(),
     execute: (args, ctx) => cancelResearchTask(ctx, args),
   }),

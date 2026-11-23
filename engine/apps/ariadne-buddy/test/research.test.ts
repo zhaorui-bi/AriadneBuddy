@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -6,8 +6,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { listJobs, waitForJob } from '../src/ariadne/jobs';
 import {
-  advanceResearchTask, cancelResearchTask, createResearchTask, getResearchTask, listResearchTasks,
-  respondResearchTask, type ResearchContext, type ResearchTask,
+  advanceResearchTask, cancelResearchTask, createResearchTask, getResearchDeskTask, getResearchTask,
+  listResearchDeskTasks, listResearchTasks, readResearchDeskArtifact, respondResearchTask,
+  type ResearchContext, type ResearchTask,
 } from '../src/ariadne/research';
 
 const tempDirs: string[] = [];
@@ -86,6 +87,59 @@ if (command === "health") {
 }
 `;
 
+const AFPK_BACKEND = `#!/usr/bin/env node
+import { createHash } from 'node:crypto';
+import { readFileSync, writeFileSync } from 'node:fs';
+const [operation, ...args] = process.argv.slice(3);
+const identity = {
+  release: 'v1.0', installation_sha256: 'a'.repeat(64), runner_sha256: 'b'.repeat(64), seed: 4242,
+  environment: { bash: 'fixture', hmmer: 'fixture', prodigal: 'fixture', r: 'fixture', r_packages: {Rtsne: 'fixture', dbscan: 'fixture', ggplot2: 'fixture', getopt: 'fixture'} },
+};
+if (operation === '--version') {
+  console.log('ariadne-afpk-ks fixture (pyhmmer fixture)');
+  process.exit(0);
+}
+if (operation === 'finder-identity') {
+  console.log(JSON.stringify(identity));
+  process.exit(0);
+}
+const value = (flag) => args[args.indexOf(flag) + 1];
+const request = JSON.parse(readFileSync(value('--request-file'), 'utf8'));
+const sha256 = (file) => createHash('sha256').update(readFileSync(file)).digest('hex');
+const scores = { fas_i: 510, fas_ii: 111, pks: 250 };
+const rows = [
+  { sequence_id: 'candidate', scores, classification: 'putative_afpk', role: 'candidate', reason: 'FAS I wins in the window' },
+  { sequence_id: 'anchor', scores, classification: 'putative_afpk', role: 'anchor', reason: 'Reference anchor' },
+  { sequence_id: 'fragment', scores: { ...scores, pks: null }, classification: 'unresolved', role: 'candidate', reason: 'No reportable PKS score' },
+];
+const inputs = {
+  'protein-input[0]': sha256(request.input_proteins[0]), 'ks-fas-i': sha256(request.ks_models.fas_i),
+  'ks-fas-ii': sha256(request.ks_models.fas_ii), 'ks-pks': sha256(request.ks_models.pks),
+};
+let original_afpk_finder;
+let published_ks_source;
+if (request.run_afpk_finder) {
+  if (!args.includes('--afpk-finder-repo')) process.exit(2);
+  const perplexity = 36;
+  rows[0].afpk_finder_run = [{perplexity, status: 'clustered', cluster: 1}];
+  rows[1].afpk_finder_run = [{perplexity, status: 'noise', cluster: 0}];
+  rows[2].afpk_finder_run = [{perplexity, status: 'missing'}];
+  original_afpk_finder = { ...identity, prepared_input_sha256: 'c'.repeat(64), runs: [{
+    perplexity, table_sha256: 'd'.repeat(64), summary_sha256: 'e'.repeat(64), matched: 2, clustered: 1, noise: 1, missing: 1,
+  }]};
+  const published = JSON.parse(readFileSync(request.published_ks_scores_file, 'utf8'));
+  published_ks_source = { doi: published.doi, figure: published.figure };
+  rows[0].published_ks_scores = published.scores.candidate;
+  inputs['published-ks-scores'] = sha256(request.published_ks_scores_file);
+}
+writeFileSync(value('--output'), JSON.stringify({
+  kind: 'ariadne.afpk-ks-report', schema_version: 1, method: 'three-profile-ks', window: request.fas_i_window,
+  rows, candidates: ['candidate'], summary: { screened: 3, nominated: 1 },
+  software: { adapter: 'fixture', pyhmmer: 'fixture' },
+  inputs, original_afpk_finder, published_ks_source,
+}));
+`;
+
 interface Fixture {
   ctx: ResearchContext;
   root: string;
@@ -144,7 +198,100 @@ function submitArtifact(root: string, stage: string, artifact: Record<string, un
   return file;
 }
 
+async function withTamperedArtifact(file: string, check: () => Promise<void>): Promise<void> {
+  const original = readFileSync(file);
+  writeFileSync(file, '{}\n');
+  try {
+    await check();
+  } finally {
+    writeFileSync(file, original);
+  }
+}
+
 describe('scientific-discovery research loop', () => {
+  it.skipIf(process.platform === 'win32').each([
+    { runOriginal: false, cancel: false },
+    { runOriginal: true, cancel: false },
+    { runOriginal: true, cancel: true },
+  ])('reviews AFPK screening (original = $runOriginal, cancel = $cancel)', async ({ runOriginal, cancel }) => {
+    const root = makeTempDir();
+    const python = path.join(root, 'python-fixture.mjs');
+    writeFileSync(python, AFPK_BACKEND, { mode: 0o700 });
+    writeFileSync(path.join(root, 'ks.fa'), '>candidate\nMKV\n>anchor\nMKVL\n>fragment\nMK\n');
+    for (const name of ['fas-i', 'fas-ii', 'pks']) writeFileSync(path.join(root, `${name}.hmm`), name);
+    const requestFile = submitArtifact(root, 'afpk', {
+      workflow: 'afpk-ks', input_proteins: ['ks.fa'],
+      ks_models: { fas_i: 'fas-i.hmm', fas_ii: 'fas-ii.hmm', pks: 'pks.hmm' },
+      fas_i_window: { min: 400, max: 600 }, reference_anchors: ['anchor'],
+      run_afpk_finder: runOriginal,
+      published_ks_scores_file: runOriginal ? submitArtifact(root, 'published', {
+        doi: '10.0000/example', figure: 'Fig. 2A', scores: { candidate: { fas_i: 500, fas_ii: 110, pks: 250 } },
+      }) : undefined,
+    });
+    const ctx: ResearchContext = {
+      jobsRoot: path.join(root, 'jobs'),
+      env: { ...process.env, ARIADNE_WORKDIR: root, ARIADNE_AFPK_PYTHON: python, ARIADNE_AFPK_FINDER_REPO: root },
+    };
+    const created = createResearchTask(ctx, {
+      requestId: 'afpk-test', objective: 'Review a synthetic KS screening batch', requestFile,
+    });
+    expect(listJobs(ctx.jobsRoot)).toEqual([]);
+    const task = await settle(ctx, created);
+    expect(task).toMatchObject({ stage: 'nomination', status: 'waiting', workflow: 'afpk-ks' });
+    expect(task.assignments).toHaveLength(1);
+    const attention = openAttention(task, 'afpk_nomination_review')!;
+    const projection = getResearchDeskTask(ctx, task.id);
+    const artifact = projection?.artifacts.find((entry) => entry.kind === 'engine');
+    expect(projection?.afpkEvidence).toEqual({ artifactId: artifact!.id, attentionId: attention.id });
+    const output = readResearchDeskArtifact(ctx, task.id, artifact!.id)?.content;
+    expect(output?.['candidates']).toEqual(['candidate']);
+    if (runOriginal) {
+      expect(output?.['original_afpk_finder']).toMatchObject({ release: 'v1.0', runs: [{ perplexity: 36, clustered: 1, noise: 1, missing: 1 }] });
+      expect(output?.['published_ks_source']).toMatchObject({ figure: 'Fig. 2A' });
+    } else {
+      expect(output?.['original_afpk_finder']).toBeUndefined();
+    }
+    const review = { taskId: task.id, attentionId: attention.id, expectedVersion: task.version, action: 'approve', reason: 'Reviewed fixture scores.' } as const;
+    await withTamperedArtifact(task.assignments[0].output, async () => {
+      await expect(respondResearchTask(ctx, review)).rejects.toThrow(/completion-time fingerprint/);
+    });
+    if (cancel) {
+      expect(getResearchDeskTask(ctx, task.id)?.canCancelTask).toBe(true);
+      const cancelled = await cancelResearchTask(ctx, { taskId: task.id, expectedVersion: task.version, reason: 'Close the pending shortlist.' });
+      expect(cancelled.status).toBe('cancelled');
+      expect(cancelled.assignments).toEqual(task.assignments);
+      expect(cancelled.attention.find((item) => item.id === attention.id)).toMatchObject({ status: 'resolved', resolution: { action: 'cancel' } });
+      expect(readResearchDeskArtifact(ctx, task.id, artifact!.id)?.content).toEqual(output);
+      expect(getResearchDeskTask(ctx, task.id)?.canCancelTask).toBe(false);
+      expect(await advanceResearchTask(ctx, { taskId: task.id })).toEqual(cancelled);
+      await expect(respondResearchTask(ctx, { ...review, expectedVersion: cancelled.version })).rejects.toThrow(/closed research task/);
+      return;
+    }
+    const approved = await respondResearchTask(ctx, review);
+    expect(approved).toMatchObject({ stage: 'handoff', status: 'ready', scientificOutcome: { status: 'conditional_nomination' } });
+    expect(await advanceResearchTask(ctx, { taskId: task.id })).toMatchObject({ status: 'ready' });
+    await expect(respondResearchTask(ctx, review)).rejects.toThrow(/version conflict/);
+    const handoff = getResearchDeskTask(ctx, task.id);
+    expect(handoff?.canCancelTask).toBe(true);
+    const close = { taskId: task.id, expectedVersion: approved.version, reason: 'Close the approved handoff.' };
+    await expect(cancelResearchTask(ctx, { ...close, expectedVersion: task.version })).rejects.toThrow(/version conflict/);
+    const cancelled = await cancelResearchTask(ctx, close);
+    expect(cancelled).toMatchObject({
+      status: 'cancelled', stage: 'handoff',
+      scientificOutcome: approved.scientificOutcome,
+      assignments: approved.assignments,
+      attention: approved.attention,
+    });
+    expect(cancelled.events.slice(0, -1)).toEqual(approved.events);
+    expect(cancelled.events.at(-1)).toMatchObject({ type: 'cancelled', stage: 'handoff', detail: close.reason });
+    expect(getResearchDeskTask(ctx, task.id)).toMatchObject({
+      canCancelTask: false, artifacts: handoff?.artifacts, afpkEvidence: projection?.afpkEvidence,
+    });
+    expect(readResearchDeskArtifact(ctx, task.id, artifact!.id)?.content).toEqual(output);
+    expect(await advanceResearchTask(ctx, { taskId: task.id })).toEqual(cancelled);
+    expect(await cancelResearchTask(ctx, { ...close, expectedVersion: cancelled.version })).toEqual(cancelled);
+  });
+
   it('walks the closed loop from literature to a validated handoff', async () => {
     const { ctx, root, requestFile } = await makeFixture();
     let task = createResearchTask(ctx, {
@@ -189,10 +336,15 @@ describe('scientific-discovery research loop', () => {
     expect(review).toBeDefined();
     expect(task.stage).toBe('hypothesis');
 
-    task = await respondResearchTask(ctx, {
+    const hypothesisApproval = {
       taskId: task.id, attentionId: review!.id, expectedVersion: task.version,
-      action: 'approve', reason: 'Hypotheses approved for computation.',
+      action: 'approve' as const, reason: 'Hypotheses approved for computation.',
+    };
+    await withTamperedArtifact(task.stageArtifacts.at(-1)!.path, async () => {
+      await expect(respondResearchTask(ctx, hypothesisApproval)).rejects.toThrow(/fingerprint/);
+      expect(getResearchTask(ctx, task.id)?.version).toBe(task.version);
     });
+    task = await respondResearchTask(ctx, hypothesisApproval);
     expect(task.stage).toBe('pathway');
     task = await settle(ctx, task);
     attention = openAttention(task, 'stage_input');
@@ -233,10 +385,19 @@ describe('scientific-discovery research loop', () => {
     expect(task.scientificOutcome.auditStatus).toBe('pass');
     expect(task.scientificOutcome.reportFile).toBeDefined();
 
-    task = await respondResearchTask(ctx, {
+    const nominationApproval = {
       taskId: task.id, attentionId: nominationReview!.id, expectedVersion: task.version,
-      action: 'approve', reason: 'Shortlist approved for experimental design.',
+      action: 'approve' as const, reason: 'Shortlist approved for experimental design.',
+    };
+    const auditArtifact = getResearchDeskTask(ctx, task.id)?.artifacts.find((entry) => entry.stage === 'audit');
+    expect(auditArtifact?.kind).toBe('engine');
+    expect(readResearchDeskArtifact(ctx, task.id, auditArtifact!.id)?.content['status']).toBe('pass');
+    await withTamperedArtifact(task.scientificOutcome.auditFile!, async () => {
+      expect(() => readResearchDeskArtifact(ctx, task.id, auditArtifact!.id)).toThrow(/fingerprint/);
+      await expect(respondResearchTask(ctx, nominationApproval)).rejects.toThrow(/fingerprint/);
+      expect(getResearchTask(ctx, task.id)?.version).toBe(task.version);
     });
+    task = await respondResearchTask(ctx, nominationApproval);
     expect(task.stage).toBe('experiment');
     task = await settle(ctx, task);
     attention = openAttention(task, 'stage_input');
@@ -272,10 +433,18 @@ describe('scientific-discovery research loop', () => {
     const decision = openAttention(task, 'iteration_decision');
     expect(decision).toBeDefined();
 
-    task = await respondResearchTask(ctx, {
+    const conclusion = {
       taskId: task.id, attentionId: decision!.id, expectedVersion: task.version,
-      action: 'conclude', reason: 'Hypothesis supported; handoff.',
+      action: 'conclude' as const, reason: 'Hypothesis supported; handoff.',
+    };
+    const validationArtifact = getResearchDeskTask(ctx, task.id)?.artifacts.find((entry) => entry.stage === 'validation');
+    expect(validationArtifact?.role).toBe('Validation Interpreter');
+    await withTamperedArtifact(task.stageArtifacts.at(-1)!.path, async () => {
+      expect(() => readResearchDeskArtifact(ctx, task.id, validationArtifact!.id)).toThrow(/fingerprint/);
+      await expect(respondResearchTask(ctx, conclusion)).rejects.toThrow(/fingerprint/);
+      expect(getResearchTask(ctx, task.id)?.version).toBe(task.version);
     });
+    task = await respondResearchTask(ctx, conclusion);
 
     expect(task.status).toBe('ready');
     expect(task.stage).toBe('handoff');
@@ -290,7 +459,44 @@ describe('scientific-discovery research loop', () => {
     expect(reread?.status).toBe('ready');
     expect(listJobs(ctx.jobsRoot)).toHaveLength(4);
     expect(listResearchTasks(ctx, { status: 'ready' }).map((entry) => entry.id)).toContain(task.id);
+
+    const closed = await cancelResearchTask(ctx, { taskId: task.id, expectedVersion: task.version, reason: 'Close the handoff.' });
+    expect(closed).toMatchObject({
+      status: 'cancelled', stage: 'handoff',
+      scientificOutcome: task.scientificOutcome,
+      assignments: task.assignments,
+      attention: task.attention,
+      stageArtifacts: task.stageArtifacts,
+    });
+    expect(readResearchDeskArtifact(ctx, task.id, validationArtifact!.id)?.content['records']).toHaveLength(1);
+    expect(listResearchTasks(ctx, { status: 'cancelled' }).map((item) => item.id)).toContain(task.id);
   }, 120_000);
+
+  it('limits desk reads to known artifacts in the current workspace without changing task state', async () => {
+    const { ctx, root, requestFile } = await makeFixture();
+    const objective = 'Document the review scope. '.repeat(40);
+    const task = createResearchTask(ctx, { requestId: 'desk-read', objective, requestFile });
+    const summaries = listResearchDeskTasks(ctx);
+    expect(summaries).toEqual([expect.objectContaining({ id: task.id, stage: 'readiness' })]);
+    expect(summaries[0]?.objective).toHaveLength(512);
+
+    const detail = getResearchDeskTask(ctx, task.id);
+    expect(detail?.objective).toBe(objective.trim());
+    expect(detail?.artifacts).toEqual([expect.objectContaining({ id: 'request-1', kind: 'request' })]);
+    expect(JSON.stringify(detail)).not.toContain(task.mandate.workDir);
+    expect(readResearchDeskArtifact(ctx, task.id, 'request-1')?.content).toMatchObject({ query_hmm: 'query.hmm' });
+    expect(readResearchDeskArtifact(ctx, task.id, requestFile)).toBeUndefined();
+    expect(readResearchDeskArtifact(ctx, task.id, '../task.json')).toBeUndefined();
+
+    const otherWorkspace = path.join(root, 'other-workspace');
+    mkdirSync(otherWorkspace);
+    const otherContext = { ...ctx, env: { ...ctx.env, ARIADNE_WORKDIR: otherWorkspace } };
+    expect(listResearchDeskTasks(otherContext)).toEqual([]);
+    expect(getResearchDeskTask(otherContext, task.id)).toBeUndefined();
+    expect(readResearchDeskArtifact(otherContext, task.id, 'request-1')).toBeUndefined();
+    expect(getResearchTask(ctx, task.id)?.version).toBe(task.version);
+    expect(listJobs(ctx.jobsRoot)).toEqual([]);
+  });
 
   it('rejects malformed requests and wrong responses without consuming budget', async () => {
     const { ctx, root, requestFile } = await makeFixture();

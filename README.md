@@ -47,36 +47,29 @@ fully auditable pipeline behind the coral cembrene-class synthases (CeeSs)
 reported in *J. Nat. Prod.* 2026 — in a multi-agent workbench that walks the
 whole scientific method, not just the screening:
 
-- **Six expert agents** — Literature Surveyor (文献调研), Hypothesis Architect
-  (假说生成), Pathway Reconstructor (途径重构), Nomination Steward (候选提名),
-  Experimental Designer (实验设计), Validation Interpreter (验证解读) — author
-  the knowledge stages and name themselves in every reply.
+- **Expert stages and independent review** — the coordinator prepares stage
+  artifacts and can delegate literature checks, hypothesis critique, and output
+  quality review to subagents with fresh contexts.
 - **Three deterministic engines as tools** — HMM retrieval (pyhmmer), ESM2
   semantic scoring, and feature-space structure retrieval (nearest-reference
   classification). Every score, E-value, probability, and nearest reference
   comes from engine artifacts; the conversational model never invents science.
-- **Human gates, honestly** — hypothesis approval, nomination approval, and
-  the iterate/conclude decision are explicit attention items. A
-  caller-declared response is not verified human approval, and an audit
-  failure can never be waived into success.
+- **Research sessions** — select a task from the session list in Web or desktop
+  to see current progress, results, and pending reviews. Expand Activity and files
+  for jobs, verified artifacts, and the task timeline. Decisions are caller-declared,
+  and audit failures block handoff.
 
 The loop it closes — **computational nomination → experimental design →
 validation interpretation → iterative optimization** — runs through a CLI, a
-full terminal TUI, a local web workbench, and an Electron desktop app, in the
-Ariadne visual language: parchment, aegean blue, verdigris, gold, terracotta,
-and a single Greek-key meander under the goddess mark.
+full terminal TUI, a local web app, and an Electron desktop app. Every interface
+shares one appearance layer: a parchment and ink scale, four pigments, and
+engraved Greek-key ornament. [Design](./docs/DESIGN.md) is the token reference.
 
 ## <img src="./docs/images/icons/ring.svg" width="22" height="22" alt="" align="top"> The closed loop
 
-```
-readiness → literature → hypothesis ──approve──→ pathway
-                ↑                                   │
-                │            discovery (HMM retrieval)
-            iterate           filtering (QC + dedupe)
-                │            nomination (ESM2 scoring + structure retrieval)
-        validation ←─ experiment ←──approve── audit (claim-evidence ledger)
-                └────────── conclude → handoff (verified)
-```
+<p align="center">
+  <img src="./docs/images/loop.svg" alt="The closed research loop: fluted-column stages around a Greek-key border, laurel branches at the three human gates, and Ariadne&#39;s thread carrying the iterate decision from validation back to hypothesis" width="720">
+</p>
 
 | Stage | Owner | What happens | Frozen artifact |
 | --- | --- | --- | --- |
@@ -93,7 +86,7 @@ readiness → literature → hypothesis ──approve──→ pathway
 | experiment | agent | expression system, assay, controls, decision criteria | `designs[]` |
 | validation | agent | outcome (supported / refuted / inconclusive) + interpretation | `records[]` |
 | **gate** | **human** | iterate (≤ 4 rounds, back to hypothesis) or conclude | — |
-| handoff | system | lineage-verified release: `scientificOutcome = validated` | task record + manifests |
+| handoff | system | verification of lineage and review of validation records (`validated`) | task record + manifests |
 
 Every engine job carries a `run-manifest.json` — sha256 fingerprints of the
 request, inputs, non-secret scientific configuration, and configured output —
@@ -101,6 +94,32 @@ and the controller re-verifies each stage output before consuming it. Without
 torch/transformers the loop still runs behind an explicit
 `proceed_without_esm` waiver, with nominations carried by HMM +
 feature-space evidence as `conditional_nomination`.
+
+For molluscan KS batches, the `afpk-ks` workflow compares FAS I, mitochondrial
+FAS II, and animal PKS bit scores. It brings putative AFPK nominations and
+optional AFPK-finder cluster records into the same session for review.
+See [Research tasks](./docs/RESEARCH_TASKS.md#molluscan-ks-screening) for the workflow.
+
+## <img src="./docs/images/icons/visualize.svg" width="22" height="22" alt="" align="top"> Appearance
+
+The palette is four pigments over a parchment and ink scale. Parchment carries the
+work, ink carries the words, and colour appears only where a surface must state
+something: aegean for interactive state, terracotta for anything awaiting a human
+decision, olive for verified evidence.
+
+<table>
+  <thead>
+    <tr><th>Token</th><th>Light</th><th>Dark</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>--tb-paper</td><td style="background:#fbfbfa;width:72px;height:20px;border:1px solid rgb(0 0 0 / 0.25)">&#160;</td><td style="background:#171717;width:72px;height:20px;border:1px solid rgb(255 255 255 / 0.25)">&#160;</td></tr>
+    <tr><td>--tb-ink</td><td style="background:#242424;width:72px;height:20px;border:1px solid rgb(0 0 0 / 0.25)">&#160;</td><td style="background:#e8e8e8;width:72px;height:20px;border:1px solid rgb(255 255 255 / 0.25)">&#160;</td></tr>
+    <tr><td>--tb-aegean</td><td style="background:#1f5688;width:72px;height:20px;border:1px solid rgb(0 0 0 / 0.25)">&#160;</td><td style="background:#7fb2d9;width:72px;height:20px;border:1px solid rgb(255 255 255 / 0.25)">&#160;</td></tr>
+    <tr><td>--tb-terracotta</td><td style="background:#a8452c;width:72px;height:20px;border:1px solid rgb(0 0 0 / 0.25)">&#160;</td><td style="background:#e08a63;width:72px;height:20px;border:1px solid rgb(255 255 255 / 0.25)">&#160;</td></tr>
+    <tr><td>--tb-olive</td><td style="background:#4f6021;width:72px;height:20px;border:1px solid rgb(0 0 0 / 0.25)">&#160;</td><td style="background:#a3b86a;width:72px;height:20px;border:1px solid rgb(255 255 255 / 0.25)">&#160;</td></tr>
+    <tr><td>--tb-marble</td><td style="background:#f4f1ea;width:72px;height:20px;border:1px solid rgb(0 0 0 / 0.25)">&#160;</td><td style="background:#232323;width:72px;height:20px;border:1px solid rgb(255 255 255 / 0.25)">&#160;</td></tr>
+  </tbody>
+</table>
 
 ## <img src="./docs/images/icons/genome.svg" width="22" height="22" alt="" align="top"> The 21 agent tools
 
@@ -154,7 +173,7 @@ npm start                     # Electron desktop app
 
 Then just ask — *“用 Ariadne 引擎对 input/all_tps.fasta 做 cembranoid CeeSs
 提名，走完整闭环”* — and approve the gates. Model-free task control also
-works (`ariadnebuddy research create|advance|respond|cancel`), and
+works (`ariadnebuddy research create|status|list|advance|respond|cancel`), and
 
 ```bash
 node engine/apps/ariadne-buddy/scripts/run-real-engine-demo.mjs /path/to/Ariadne
@@ -169,10 +188,23 @@ the nominated candidates with their evidence.
 | --- | --- |
 | [Quick start](./docs/QUICKSTART.md) | install, onboard, verify, first run |
 | [Architecture](./docs/ARCHITECTURE.md) | the four layers, boundaries, security posture |
+| [Design](./docs/DESIGN.md) | the palette, tokens, and motif layer |
+| [Keyboard](./docs/KEYBOARD.md) | desktop, Research Desk, and command-line keys |
+| [Glossary](./docs/GLOSSARY.md) | vocabulary, task states, audit codes |
+| [Examples](./docs/EXAMPLES.md) | worked artifact shapes |
 | [Scientific workflow discipline](./docs/SCIENTIFIC_WORKFLOWS.md) | evidence classes, stage contracts, claims language |
 | [Research tasks](./docs/RESEARCH_TASKS.md) | the state machine, responses, guarantees |
+| [Changelog](./CHANGELOG.md) · [Contributing](./CONTRIBUTING.md) · [Security](./SECURITY.md) | release history, change boundaries, reporting |
 | [FAQ](./docs/FAQ.md) · [Troubleshooting](./docs/TROUBLESHOOTING.md) · [Release](./docs/RELEASE.md) | answers, fixes, shipping |
-| 中文文档 | [快速上手](./docs/zh-CN/QUICKSTART.md) · [常见问题](./docs/zh-CN/FAQ.md) · [故障排查](./docs/zh-CN/TROUBLESHOOTING.md) · [工作流](./docs/zh-CN/DOMAIN_WORKFLOW.md) |
+| 中文文档 | [快速上手](./docs/zh-CN/QUICKSTART.md) · [常见问题](./docs/zh-CN/FAQ.md) · [故障排查](./docs/zh-CN/TROUBLESHOOTING.md) · [科学工作流纪律](./docs/zh-CN/DOMAIN_WORKFLOW.md) · [设计语言](./docs/zh-CN/DESIGN.md) · [术语表](./docs/zh-CN/GLOSSARY.md) |
+
+Brand assets: `build/logo.svg` is the canonical mark — it is packaged into the desktop
+application and mirrored byte-for-byte into the Web UI as `web-ui/ariadne-logo.svg`.
+`docs/logo.svg` is the display lockup used in these READMEs.
+
+Documentation language: English is the source language. Every English document under
+`docs/` has a Chinese mirror under `docs/zh-CN/`, and the two READMEs are kept symmetric.
+The interface itself ships both languages and follows the language of the host system.
 
 ## <img src="./docs/images/icons/filter.svg" width="22" height="22" alt="" align="top"> Verification
 
@@ -208,6 +240,13 @@ If AriadneBuddy contributes to your research, please cite the accompanying
 Please also report the AriadneBuddy version (`ariadnebuddy --version`), the
 ariadne-tps revision, reference snapshot, HMM libraries, and ESM model used.
 See [CITATION.cff](./CITATION.cff) for this software's own record.
+
+## <img src="./docs/images/icons/book.svg" width="22" height="22" alt="" align="top"> Support
+
+- Bugs, questions, and feature requests:
+  [github.com/zhaorui-bi/AriadneBuddy/issues](https://github.com/zhaorui-bi/AriadneBuddy/issues)
+- Security reports: the private advisory channel described in [SECURITY.md](./SECURITY.md).
+  Do not open a public issue for an unpatched vulnerability.
 
 ## <img src="./docs/images/icons/output.svg" width="22" height="22" alt="" align="top"> License & acknowledgements
 

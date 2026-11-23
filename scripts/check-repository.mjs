@@ -85,13 +85,16 @@ const requiredFiles = [
   'licenses/THIRD_PARTY_NOTICES.md',
   'licenses/SBOM.spdx.json',
   'build/logo.png',
-  'build/logo-256.png',
+  'build/logo.svg',
   'build/icon.ico',
   'scripts/check-adapter.mjs',
   'engine/apps/ariadne-buddy/backend/ariadne_cli.py',
   'engine/apps/ariadne-buddy/test-python/test_ariadne_cli.py',
   'docs/RELEASE.md',
   'docs/SCIENTIFIC_WORKFLOWS.md',
+  'engine/apps/ariadne-buddy/scripts/check-theme-contract.mjs',
+  'engine/apps/ariadne-buddy/scripts/check-desk-contract.mjs',
+  'engine/apps/ariadne-buddy/scripts/check-brand-leftovers.mjs',
 ];
 for (const relativePath of requiredFiles) {
   check(existsSync(path.join(root, relativePath)), `required file missing: ${relativePath}`);
@@ -184,12 +187,12 @@ for (const destination of [
 
 const generatedMark = path.join(
   root,
-  'engine/apps/ariadne-buddy/web-ui/ariadne-logo.png',
+  'engine/apps/ariadne-buddy/web-ui/ariadne-logo.svg',
 );
 if (existsSync(generatedMark)) {
   check(
-    sha256(generatedMark) === sha256(path.join(root, 'build/logo-256.png')),
-    'generated Web UI mark differs from build/logo-256.png',
+    sha256(generatedMark) === sha256(path.join(root, 'build/logo.svg')),
+    'generated Web UI mark differs from build/logo.svg',
   );
 }
 

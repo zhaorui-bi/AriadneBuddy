@@ -4,6 +4,13 @@ AriadneBuddy is an execution and interaction layer around the Ariadne
 deterministic engines. It helps make natural-product candidate discovery
 traceable; it does not turn a screening score into a demonstrated enzyme.
 
+![The closed research loop: fluted-column stages around a Greek-key border, laurel
+branches at the three human gates, and Ariadne's thread carrying the iterate decision
+back to hypothesis](./images/loop.svg)
+
+The stages below are the columns of that loop. Each one freezes an artifact, and the
+controller re-verifies a stage output before consuming it.
+
 ## Operating rules
 
 1. **Role-first**: every reply names the expert role that produced it

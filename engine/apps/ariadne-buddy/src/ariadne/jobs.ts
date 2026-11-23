@@ -530,21 +530,34 @@ export async function cancelJob(
   if (job.status !== 'running') return job;
 
   if (pidAlive(job.pid) && !processMatchesJob(job.pid, job.dir)) {
+    const observed = getJob(jobsRoot, id);
+    if (observed?.status !== 'running') return observed;
     throw new Error(
       `Refusing to signal process ${String(job.pid)} because it no longer matches this job`,
     );
   }
-  signalJobProcess(job.pid, 'SIGTERM', false);
+  const beforeSignal = getJob(jobsRoot, id);
+  if (beforeSignal?.status !== 'running') return beforeSignal;
+  if (beforeSignal.pid !== job.pid) throw new Error('The running job identity changed during cancellation.');
+  let signalled = signalJobProcess(job.pid, 'SIGTERM', false);
   await waitForProcessExit(job.dir, job.pid, CANCEL_GRACE_MS);
   if (pidAlive(job.pid) && !isRegularFile(path.join(job.dir, 'exit.code'))) {
+    if (!processMatchesJob(job.pid, job.dir)) {
+      const observed = getJob(jobsRoot, id);
+      if (observed?.status !== 'running') return observed;
+      throw new Error('The job process no longer matches its record during cancellation.');
+    }
     if (!signalJobProcess(job.pid, 'SIGKILL', true)) {
       throw new Error(`Could not force-stop Ariadne job process ${String(job.pid)}`);
     }
+    signalled = true;
     await waitForProcessExit(job.dir, job.pid, CANCEL_FORCE_WAIT_MS);
   }
   if (pidAlive(job.pid) && !isRegularFile(path.join(job.dir, 'exit.code'))) {
     throw new Error(`Ariadne job process ${String(job.pid)} did not terminate`);
   }
+  const terminal = getJob(jobsRoot, id);
+  if (!signalled || terminal?.status === 'succeeded') return terminal;
   atomicWriteText(path.join(job.dir, 'cancelled'), '');
   return getJob(jobsRoot, id);
 }

@@ -7,7 +7,7 @@ description: Create or resume a persistent, gated scientific-discovery research 
 
 AriadneBuddy couples **expert agent roles** with the **Ariadne deterministic engines** to
 discover natural-product biosynthetic enzymes — today, coral terpene synthases (TPS) and
-cembrene-class (CeeSs) candidates. Expert roles divide every task:
+cembrene-class (CeeSs) candidates. The coordinator uses these roles according to the stage:
 
 - **Literature Surveyor (文献调研)** — ground the objective in citable sources; expose gaps.
 - **Hypothesis Architect (假说生成)** — testable hypotheses tied to the target class.
@@ -22,6 +22,25 @@ This is discovery support: a nominated candidate is not a demonstrated enzyme.
 The harness exposes the workflow through `ariadne_*` MCP tools and durable research
 tasks with provenance manifests. Long engine operations run as durable jobs — never
 busy-poll; use job status/manifest/bounded logs.
+
+## Specialist review and handoff
+
+- Use the built-in `Agent` tool when an independent review would help. Use
+  `subagent_type: "explore"`, `model: "primary"`, `fork: false`, and
+  `run_in_background: false`. Give the reviewer a short description for the activity
+  view and the smallest relevant set of sources or verified records.
+- Give each reviewer one question. Ask a literature reviewer to check claims against
+  the cited source and flag gaps. Ask a hypothesis reviewer to identify assumptions,
+  counterevidence, or observations that would distinguish competing explanations. Ask a
+  quality reviewer to inspect recorded outputs for missing evidence and provenance. Request
+  findings with source locations, uncertainty, and any unresolved disagreement.
+- Keep these reviews read-only. Instruct reviewers to avoid shell commands, writes,
+  compute launches, and task-state changes. As coordinator, verify findings against the
+  original records, prepare and submit the stage artifact, and bring disagreements to the
+  researcher. Record the review role and its sources in the stage report. A gate response
+  must reflect a decision explicitly provided by the researcher.
+- If delegation is unavailable or fails, use the corresponding stage role to continue
+  and tell the researcher who actually reviewed the evidence.
 
 ## Operating contract
 
@@ -60,7 +79,28 @@ Research requests are snake_case JSON with at least:
 Relative paths resolve from `ARIADNE_WORKDIR`. Check reference clades and TPS type
 labels with `ariadne_catalog` before first use.
 
-## Closed-loop workflow (case → handoff)
+## Molluscan AFPK screening
+
+For pre-extracted molluscan KS proteins, create a research request with
+`workflow: "afpk-ks"`, `input_proteins`, `ks_models: {fas_i, fas_ii, pks}`, and
+an explicit `fas_i_window: {min, max}` in bit-score units. `reference_anchors`
+lists optional IDs present in that batch and excluded from nomination.
+`afpk_finder_files` lists existing cluster exports for the same IDs.
+`published_ks_scores_file` can attach published three-model bit scores.
+Set `run_afpk_finder: true` when the researcher requests a fresh v1.0 run.
+The original release and its dependencies come from local AFPK-finder settings.
+The run captures every emitted perplexity alongside the three-model scores.
+Compare assignments by sequence and training-clade labels. Cluster numbers are
+specific to each run. Point `ARIADNE_AFPK_PYTHON` at an interpreter with PyHMMER.
+
+Use the same research create and advance tools. Read the verified artifact
+containing all three model scores and the shortlist. Highlight incomplete scores
+and external cluster evidence independently. Request the researcher's decision at
+`afpk_nomination_review` in the task's session. Approval completes the computational
+handoff and retains the putative assignment. See the mollusc example under
+`examples/cases` for pinned public sources.
+
+## TPS/CeeSs closed-loop workflow (case → handoff)
 
 1. Run `ariadne_status`; confirm engines, reference data, and ESM availability.
 2. Call `ariadne_research_create` with `requestFile`, a concrete `objective`, and a
@@ -73,7 +113,7 @@ labels with `ariadne_catalog` before first use.
    - hypothesis artifact: `{hypotheses: [{id?, statement, rationale, prediction, literature_refs?}]}`
    - pathway artifact: `{substrate?, product, steps: [{order?, transformation, enzyme_class, evidence?}], enzyme_slots?}`
    - experiment artifact: `{designs: [{candidate_id, system, construct, assay, controls: [..], decision_criteria}]}`
-   - validation artifact: `{records: [{design_ref?, candidate_id?, outcome: supported|refuted|inconclusive, measurements?, interpretation}]}`
+   - validation artifact: `{records: [{design_ref?, candidate_id?, outcome: supported|refuted|inconclusive, measurements?, interpretation}]}`. Wait for experimental records supplied or identified by the researcher. Cite those records and distinguish reported observations from the interpretation.
 4. Gates: after the hypothesis artifact, `approve` (or `revise`) before compute is
    spent. After a passing nomination audit, `approve` the shortlist before
    experimental design. After validation, `iterate` (new hypothesis round, bounded

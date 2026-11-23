@@ -20,7 +20,8 @@ https://github.com/zhaorui-bi/AriadneBuddy/security/advisories/new
 Do not open a public issue for an unpatched vulnerability. Include the affected
 version or commit, operating system, reproduction steps, impact, and any safe
 mitigation you have identified. Never attach real API keys, access tokens,
-private source-water or facility data, unpublished knowledge records, session data, or complete user configuration.
+private sequence or structure data, unpublished knowledge records, session data, or
+complete user configuration.
 
 ## Security boundary
 
@@ -32,6 +33,6 @@ other long or destructive operations, protect bearer URLs, and keep untrusted
 JSON/data files outside sensitive directories.
 
 The application stores configuration and job logs locally. These may contain
-provider details, file paths, water-quality inputs, facility constraints,
-retrieved evidence, model output, or other confidential research metadata. Keep the Ariadne home and job directories private and do
-not commit them.
+provider details, file paths, sequence and structure inputs, retrieved evidence,
+model output, or other confidential research metadata. Keep the Ariadne home and
+job directories private and do not commit them.

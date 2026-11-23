@@ -1,0 +1,455 @@
+/* Shared AriadneBuddy appearance for chat, task sessions, and desktop startup. */
+:root { color-scheme: light; }
+:root[data-color-scheme="dark"] { color-scheme: dark; }
+:root[data-color-scheme="system"] { color-scheme: light dark; }
+
+:root {
+  --font-ui-latin: system-ui, "Helvetica Neue", Arial, sans-serif;
+  --font-ui: system-ui, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-display: "Cormorant Garamond Variable", "Noto Serif SC Variable", "Songti SC", STSong, "Source Han Serif SC", Georgia, serif;
+  --font-editorial: "Noto Serif SC Variable", "Songti SC", STSong, "Source Han Serif SC", Georgia, serif;
+  --sans: var(--font-ui);
+  --font-sans: var(--font-ui);
+
+  --workspace-rail-width: 16.875rem;
+  --workspace-toolbar-height: 3rem;
+  --workspace-content-width: 70rem;
+  --workspace-radius: 0.375rem;
+  --workspace-panel-radius: 0.625rem;
+  --workspace-button-height: 2.375rem;
+  --workspace-heading-font: var(--font-display);
+  --workspace-rule: 3px double var(--color-line-strong);
+  --workspace-frieze-ink: color-mix(in srgb, var(--color-accent) 62%, transparent);
+
+  --tb-paper: light-dark(#fbfbfa, #171717);
+  --tb-paper-raised: light-dark(#ffffff, #202020);
+  --tb-paper-soft: light-dark(#f2f2f1, #242424);
+  --tb-paper-deep: light-dark(#ebebea, #111111);
+  --tb-marble: light-dark(#f4f1ea, #232323);
+  --tb-marble-vein: light-dark(rgb(0 0 0 / 0.05), rgb(255 255 255 / 0.05));
+  --tb-ink: light-dark(#242424, #e8e8e8);
+  --tb-ink-strong: light-dark(#151515, #f5f5f5);
+  --tb-ink-muted: light-dark(#595959, #bdbdbd);
+  --tb-ink-faint: light-dark(#707070, #a3a3a3);
+  --tb-aegean: light-dark(#1f5688, #7fb2d9);
+  --tb-aegean-deep: light-dark(#173f66, #a8cbe6);
+  --tb-terracotta: light-dark(#a8452c, #e08a63);
+  --tb-olive: light-dark(#4f6021, #a3b86a);
+  --tb-blue: var(--tb-aegean);
+  --tb-blue-hover: var(--tb-aegean-deep);
+  --tb-action: light-dark(#1f5688, #a8cbe6);
+  --tb-action-hover: light-dark(#173f66, #c4dcf0);
+  --tb-cyan: var(--tb-olive);
+  --tb-success: var(--tb-olive);
+  --tb-warning: var(--tb-terracotta);
+  --tb-danger: light-dark(#8f2d1f, #e08070);
+  --tb-done: light-dark(#64734a, #8d9c74);
+  --tb-line: light-dark(rgb(0 0 0 / 0.13), rgb(255 255 255 / 0.16));
+  --tb-line-strong: light-dark(rgb(0 0 0 / 0.32), rgb(255 255 255 / 0.35));
+  --tb-surface-glass: light-dark(rgb(255 255 255 / 0.96), rgb(32 32 32 / 0.96));
+  --tb-sidebar: light-dark(#f2f2f1, #1d1d1d);
+  --tb-sidebar-text: var(--tb-ink);
+  --tb-sidebar-strong: var(--tb-ink-strong);
+  --tb-sidebar-muted: var(--tb-ink-muted);
+  --tb-sidebar-faint: var(--tb-ink-faint);
+  --tb-sidebar-line: var(--tb-line);
+  --tb-sidebar-hover: light-dark(#e9e9e8, #272727);
+  --tb-sidebar-selected: light-dark(#e4e4e3, #323232);
+  --tb-sidebar-selected-text: var(--tb-ink-strong);
+  --tb-shadow-color: light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.52));
+}
+
+.workspace-mark {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  color: var(--color-text-strong);
+  background-color: currentColor;
+  mask: url("/ariadne-logo.svg") center / contain no-repeat;
+}
+
+.workspace-control {
+  min-height: var(--workspace-button-height);
+  padding-inline: 0.78rem;
+  border-radius: var(--workspace-radius);
+}
+
+.workspace-column {
+  --column-width: 1.5rem;
+  --column-height: 5.75rem;
+  display: block;
+  flex: none;
+  position: relative;
+  width: var(--column-width);
+  height: var(--column-height);
+  background:
+    repeating-linear-gradient(90deg, var(--color-surface-raised) 0 2px, var(--color-line) 2px 3px, var(--color-surface-sunken) 3px 4px)
+    center / 65% calc(100% - 0.7rem) no-repeat;
+}
+
+.workspace-column::before,
+.workspace-column::after {
+  position: absolute;
+  inset-inline: 0;
+  content: "";
+  height: 0.37rem;
+  border-block: 1px solid var(--color-line-strong);
+  background: linear-gradient(var(--color-surface-raised) 40%, var(--color-line) 41% 57%, var(--color-surface) 58%);
+}
+
+.workspace-column::before {
+  inset-block-start: 0;
+  clip-path: polygon(0 0, 100% 0, 100% 45%, 86% 45%, 86% 75%, 76% 75%, 76% 100%, 24% 100%, 24% 75%, 14% 75%, 14% 45%, 0 45%);
+}
+
+.workspace-column::after {
+  inset-block-end: 0;
+  clip-path: polygon(24% 0, 76% 0, 76% 25%, 86% 25%, 86% 55%, 100% 55%, 100% 100%, 0 100%, 0 55%, 14% 55%, 14% 25%, 24% 25%);
+}
+
+.workspace-frieze {
+  display: block;
+  height: 11px;
+  background:
+    linear-gradient(90deg, transparent 4px, var(--workspace-frieze-ink) 4px 24px, transparent 24px) 0 1px / 28px 1px repeat-x,
+    linear-gradient(90deg, transparent 4px, var(--workspace-frieze-ink) 4px 5px, transparent 5px) 0 2px / 28px 7px repeat-x,
+    linear-gradient(90deg, transparent 23px, var(--workspace-frieze-ink) 23px 24px, transparent 24px) 0 2px / 28px 8px repeat-x,
+    linear-gradient(90deg, transparent 10px, var(--workspace-frieze-ink) 10px 24px, transparent 24px) 0 9px / 28px 1px repeat-x,
+    linear-gradient(90deg, transparent 10px, var(--workspace-frieze-ink) 10px 11px, transparent 11px) 0 5px / 28px 4px repeat-x,
+    linear-gradient(90deg, transparent 10px, var(--workspace-frieze-ink) 10px 18px, transparent 18px) 0 5px / 28px 1px repeat-x,
+    linear-gradient(90deg, var(--workspace-frieze-ink) 0 5px, transparent 5px 23px, var(--workspace-frieze-ink) 23px) 0 10px / 28px 1px repeat-x;
+}
+
+:root,
+html[data-color-scheme="light"],
+html[data-color-scheme="dark"],
+html[data-color-scheme="system"] {
+  --bg: var(--tb-paper);
+  --panel: var(--tb-paper-soft);
+  --panel2: color-mix(in srgb, var(--tb-ink) 6%, transparent);
+  --canvas: var(--tb-paper-raised);
+  --logo: var(--tb-blue);
+  --blue: var(--tb-blue);
+  --blue2: var(--tb-blue-hover);
+  --soft: color-mix(in srgb, var(--tb-blue) 11%, transparent);
+  --bd: color-mix(in srgb, var(--tb-blue) 31%, transparent);
+
+  --color-bg: var(--tb-paper);
+  --color-surface: var(--tb-paper-soft);
+  --color-surface-raised: var(--tb-paper-raised);
+  --color-surface-overlay: var(--tb-surface-glass);
+  --color-surface-sunken: var(--tb-paper-deep);
+  --color-surface-deep: var(--tb-paper-deep);
+  --color-well: var(--tb-paper-soft);
+  --color-inline-code-bg: color-mix(in srgb, var(--tb-blue) 8%, transparent);
+  --color-text: color-mix(in srgb, var(--tb-ink) 96%, transparent);
+  --color-text-strong: var(--tb-ink-strong);
+  --color-text-muted: var(--tb-ink-muted);
+  --color-text-faint: var(--tb-ink-faint);
+  --color-text-quaternary: color-mix(in srgb, var(--tb-ink-faint) 70%, transparent);
+  --color-text-on-accent: light-dark(#ffffff, #10283f);
+  --color-line: var(--tb-line);
+  --color-line-strong: var(--tb-line-strong);
+  --color-subtle: color-mix(in srgb, var(--tb-ink) 4%, transparent);
+  --color-hover: color-mix(in srgb, var(--tb-blue) 7%, transparent);
+  --color-selected: color-mix(in srgb, var(--tb-blue) 11%, transparent);
+  --color-selected-hover: color-mix(in srgb, var(--tb-blue) 16%, transparent);
+  --panel-tab-selected-bg: color-mix(in srgb, var(--tb-blue) 15%, transparent);
+  --color-sidebar-bg: var(--tb-sidebar);
+  --color-user-bubble-bg: color-mix(in srgb, var(--tb-blue) 7%, var(--tb-paper-raised));
+  --color-accent: var(--tb-blue);
+  --color-accent-hover: var(--tb-blue-hover);
+  --color-accent-soft: color-mix(in srgb, var(--tb-blue) 11%, transparent);
+  --color-accent-bd: color-mix(in srgb, var(--tb-blue) 32%, transparent);
+  --color-info: var(--tb-blue);
+  --color-success: var(--tb-success);
+  --color-success-soft: color-mix(in srgb, var(--tb-success) 13%, transparent);
+  --color-success-bd: color-mix(in srgb, var(--tb-success) 30%, transparent);
+  --color-warning: var(--tb-warning);
+  --color-warning-soft: color-mix(in srgb, var(--tb-warning) 13%, transparent);
+  --color-warning-bd: color-mix(in srgb, var(--tb-warning) 30%, transparent);
+  --color-orange: var(--tb-warning);
+  --color-orange-soft: color-mix(in srgb, var(--tb-warning) 13%, transparent);
+  --color-danger: var(--tb-danger);
+  --color-danger-soft: color-mix(in srgb, var(--tb-danger) 12%, transparent);
+  --color-danger-bd: color-mix(in srgb, var(--tb-danger) 29%, transparent);
+  --color-done: var(--tb-done);
+  --color-done-soft: color-mix(in srgb, var(--tb-done) 12%, transparent);
+  --color-done-bd: color-mix(in srgb, var(--tb-done) 29%, transparent);
+  --color-fill-1: color-mix(in srgb, var(--tb-ink) 3%, transparent);
+  --color-fill-2: color-mix(in srgb, var(--tb-ink) 6%, transparent);
+  --color-fill-4: color-mix(in srgb, var(--tb-ink) 24%, transparent);
+  --color-bg-translucent: color-mix(in srgb, var(--tb-paper) 78%, transparent);
+  --color-menu-bg: color-mix(in srgb, var(--tb-paper-raised) 95%, transparent);
+  --color-menu-bg-frost: color-mix(in srgb, var(--tb-paper-raised) 84%, transparent);
+  --color-dock-panel-bg: color-mix(in srgb, var(--tb-paper-raised) 93%, transparent);
+  --color-topbar-bg-frost: color-mix(in srgb, var(--tb-paper) 84%, transparent);
+  --color-composer-bg: color-mix(in srgb, var(--tb-paper-raised) 97%, transparent);
+  --color-composer-line: color-mix(in srgb, var(--tb-blue) 24%, var(--tb-line));
+  --color-composer-focus-line: color-mix(in srgb, var(--tb-blue) 66%, transparent);
+  --color-send-bg: var(--tb-action);
+  --color-send-bg-hover: var(--tb-action-hover);
+  --color-send-icon: var(--color-text-on-accent);
+  --color-send-bg-disabled: color-mix(in srgb, var(--tb-ink) 8%, transparent);
+  --color-send-icon-disabled: color-mix(in srgb, var(--tb-ink) 29%, transparent);
+  --p-selection: color-mix(in srgb, var(--tb-blue) 24%, transparent);
+  --color-code-selection: color-mix(in srgb, var(--tb-blue) 29%, transparent);
+  --markdown-text-color: var(--color-text);
+  --markdown-link-color: var(--tb-blue);
+  --markdown-border-color: var(--tb-line);
+  --markdown-quote-rule-color: var(--tb-cyan);
+  --markdown-code-background: var(--tb-paper-raised);
+  --markdown-code-header-background: color-mix(in srgb, var(--tb-paper-soft) 92%, transparent);
+  --markdown-code-action-background: color-mix(in srgb, var(--tb-paper-raised) 92%, transparent);
+  --markdown-image-background: var(--tb-paper-soft);
+
+  --p-hairline: 1px;
+  --panel-head-h: var(--workspace-toolbar-height);
+  --radius-xs: 4px;
+  --radius-sm: 7px;
+  --radius-md: 10px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 14px;
+  --radius-composer: var(--workspace-panel-radius);
+  --radius-window: var(--workspace-panel-radius);
+  --shadow-xs: 0 1px 2px color-mix(in srgb, var(--tb-shadow-color) 42%, transparent);
+  --shadow-sm: 0 2px 7px color-mix(in srgb, var(--tb-shadow-color) 48%, transparent);
+  --shadow-menu: 0 18px 50px -20px var(--tb-shadow-color), 0 3px 12px color-mix(in srgb, var(--tb-shadow-color) 54%, transparent);
+  --shadow-input: 0 16px 42px -29px var(--tb-shadow-color), 0 3px 10px color-mix(in srgb, var(--tb-shadow-color) 40%, transparent);
+  --shadow-md: 0 14px 35px -23px var(--tb-shadow-color), 0 3px 10px color-mix(in srgb, var(--tb-shadow-color) 50%, transparent);
+  --shadow-lg: 0 24px 58px -28px var(--tb-shadow-color), 0 7px 18px color-mix(in srgb, var(--tb-shadow-color) 54%, transparent);
+  --shadow-xl: 0 34px 82px -32px var(--tb-shadow-color), 0 10px 24px color-mix(in srgb, var(--tb-shadow-color) 62%, transparent);
+  --p-focus-ring: 0 0 0 3px color-mix(in srgb, var(--tb-blue) 20%, transparent);
+  --p-focus-ring-strong: 0 0 0 3px color-mix(in srgb, var(--tb-blue) 19%, transparent), 0 0 0 1px var(--tb-blue);
+}
+
+/* ------------------------------------------------------------------ *
+ * Classical layer
+ *
+ * The Ariadne identity is built from four pigments and one restraint
+ * rule: parchment carries the work, ink carries the words, and colour
+ * appears only where a surface must state something. Never let two
+ * chromatic accents share one surface, and keep every wash at or below
+ * ~13% of its pigment.
+ *
+ *   aegean      the sea Ariadne's thread crosses — the single brand
+ *               accent; interactive state, links, the active rail
+ *   terracotta  the vessel the story is written on — warning, caution,
+ *               anything awaiting a human decision
+ *   olive       the branch of victory — success, completion, verified
+ *               evidence
+ *   marble      the slab an inscription is carved into — the raised
+ *               card surface, and the ornament bands
+ * ------------------------------------------------------------------ */
+
+:root {
+  --color-rule-frieze: var(--workspace-frieze-ink);
+  --color-rule-frieze-accent: color-mix(in srgb, var(--tb-aegean) 55%, transparent);
+  --color-marble: var(--tb-marble);
+  --color-marble-vein: var(--tb-marble-vein);
+  --marble-highlight: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--tb-marble) 88%, var(--tb-paper-raised)) 0%,
+    var(--tb-marble) 42%,
+    color-mix(in srgb, var(--tb-marble) 92%, var(--tb-paper-deep)) 100%
+  );
+  --color-ink-stone: color-mix(in srgb, var(--tb-ink) 78%, var(--tb-paper));
+  --color-aegean: var(--tb-aegean);
+  --color-aegean-deep: var(--tb-aegean-deep);
+  --color-terracotta: var(--tb-terracotta);
+  --color-terracotta-soft: color-mix(in srgb, var(--tb-terracotta) 13%, transparent);
+  --color-terracotta-bd: color-mix(in srgb, var(--tb-terracotta) 30%, transparent);
+  --color-olive: var(--tb-olive);
+  --color-olive-soft: color-mix(in srgb, var(--tb-olive) 13%, transparent);
+  --color-olive-bd: color-mix(in srgb, var(--tb-olive) 30%, transparent);
+
+  /* Stone geometry: everything is cut, never pill-shaped, except true
+     circles (avatars, swatches, the medallion). */
+  --radius-pill: 999px;
+  --radius-stele: 2px;
+  --shadow-stele:
+    0 1px 0 color-mix(in srgb, var(--tb-shadow-color) 30%, transparent),
+    0 10px 26px -18px var(--tb-shadow-color);
+  --shadow-medallion:
+    inset 0 0 0 1px color-mix(in srgb, var(--tb-ink) 14%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--tb-paper-raised) 70%, transparent);
+
+  /* Mouldings. Every rule is engraved ink, never chromatic. */
+  --rule-hairline: 1px solid var(--color-line);
+  --rule-egg-and-dart:
+    linear-gradient(90deg, var(--color-rule-frieze) 0 3px, transparent 3px) 0 0 / 9px 3px repeat-x,
+    radial-gradient(circle at 4.5px 5px, var(--color-rule-frieze) 0 1.3px, transparent 1.4px) 0 3px / 9px 7px repeat-x,
+    linear-gradient(90deg, var(--color-rule-frieze) 0 1px, transparent 1px) 0 9px / 9px 1px repeat-x;
+  --rule-dentil:
+    linear-gradient(90deg, var(--color-rule-frieze) 0 4px, transparent 4px) 0 0 / 9px 4px repeat-x,
+    linear-gradient(90deg, var(--color-rule-frieze) 0 9px, transparent 9px) 0 4px / 9px 1px repeat-x;
+}
+
+/* Latent upstream tokens the brand patch never reaches. Pin them to the
+   ink and pigment scale so no unpigmented blue can surface from the bundle. */
+:root {
+  --star: var(--tb-ink-muted);
+  --bluebg: color-mix(in srgb, var(--tb-aegean) 11%, transparent);
+  --blueln: color-mix(in srgb, var(--tb-aegean) 32%, transparent);
+  --color-attention: var(--tb-terracotta);
+  --color-term-black: var(--tb-ink);
+  --color-term-red: var(--tb-danger);
+  --color-term-green: var(--tb-olive);
+  --color-term-yellow: var(--tb-terracotta);
+  --color-term-blue: var(--tb-aegean);
+  --color-term-magenta: var(--tb-aegean-deep);
+  --color-term-cyan: var(--tb-olive);
+  --color-term-white: var(--tb-ink-strong);
+}
+
+/* --- Motif primitives ---------------------------------------------- */
+
+/* A stele: an upright marble slab carrying an inscription. Reserved for
+   the surfaces that state a human decision or a frozen artifact. */
+.stele {
+  position: relative;
+  border: var(--rule-hairline);
+  border-radius: var(--radius-stele);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-stele);
+}
+
+.stele::before {
+  display: block;
+  height: 10px;
+  border-block-end: var(--rule-hairline);
+  background: var(--rule-egg-and-dart), var(--marble-highlight);
+  background-size: 9px 10px, 100% 100%;
+  content: "";
+}
+
+.rule-double {
+  border: 0;
+  border-block-start: var(--workspace-rule);
+  margin: 0;
+}
+
+/* The Greek key (meander). A continuous band, never a single dash. */
+.divider-meander {
+  position: relative;
+  height: 11px;
+  border: 0;
+  background:
+    linear-gradient(90deg, transparent 4px, var(--color-rule-frieze) 4px 24px, transparent 24px) 0 1px / 28px 1px repeat-x,
+    linear-gradient(90deg, transparent 4px, var(--color-rule-frieze) 4px 5px, transparent 5px) 0 2px / 28px 7px repeat-x,
+    linear-gradient(90deg, transparent 23px, var(--color-rule-frieze) 23px 24px, transparent 24px) 0 2px / 28px 8px repeat-x,
+    linear-gradient(90deg, transparent 10px, var(--color-rule-frieze) 10px 24px, transparent 24px) 0 9px / 28px 1px repeat-x,
+    linear-gradient(90deg, transparent 10px, var(--color-rule-frieze) 10px 11px, transparent 11px) 0 5px / 28px 4px repeat-x,
+    linear-gradient(90deg, transparent 10px, var(--color-rule-frieze) 10px 18px, transparent 18px) 0 5px / 28px 1px repeat-x,
+    linear-gradient(90deg, var(--color-rule-frieze) 0 5px, transparent 5px 23px, var(--color-rule-frieze) 23px) 0 10px / 28px 1px repeat-x;
+}
+
+/* A struck medallion: the seal on a verified record. */
+.medallion {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--marble-highlight);
+  box-shadow: var(--shadow-medallion);
+  color: var(--color-text-strong);
+}
+
+.medallion > * {
+  width: 1.25rem;
+  height: 1.25rem;
+  background-color: currentColor;
+  mask: var(--medallion-mask, url("/ariadne-logo.svg")) center / contain no-repeat;
+}
+
+/* An amphora filling: progress that reads as a vessel, not a bar. */
+.progress-amphora {
+  position: relative;
+  display: block;
+  width: 1.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 40% 40% 46% 46% / 22% 22% 12% 12%;
+  background: var(--color-surface-sunken);
+  overflow: hidden;
+}
+
+.progress-amphora::before {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline: 0;
+  height: var(--amphora-fill, 0%);
+  background: var(--tb-aegean);
+  content: "";
+}
+
+/* A cartouche: a framed name plate for the product mark. */
+.cartouche {
+  display: inline-grid;
+  place-items: center;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-stele);
+  background: var(--marble-highlight);
+  box-shadow: var(--shadow-stele);
+}
+
+.cartouche__mark {
+  width: 2rem;
+  height: 2rem;
+  background-color: currentColor;
+  mask: url("/ariadne-logo.svg") center / contain no-repeat;
+}
+
+/* A fluted column used as a rail divider. */
+.rail-divider--column {
+  position: relative;
+  width: 1.5rem;
+  height: 5.75rem;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--color-surface-raised) 0 2px,
+    var(--color-line) 2px 3px,
+    var(--color-surface-sunken) 3px 4px
+  );
+  background-position: center;
+  background-size: 65% calc(100% - 0.7rem);
+  background-repeat: no-repeat;
+}
+
+/* --- Accessibility guards ------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .stele,
+  .medallion,
+  .progress-amphora,
+  .cartouche {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .stele,
+  .cartouche,
+  .medallion,
+  .rail-divider--column {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    box-shadow: none;
+  }
+
+  .stele::before,
+  .divider-meander,
+  .workspace-frieze {
+    background: none;
+    border-block-end: 1px solid CanvasText;
+  }
+
+  .progress-amphora::before {
+    background: CanvasText;
+  }
+}

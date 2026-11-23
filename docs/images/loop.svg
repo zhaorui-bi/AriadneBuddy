@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="800" viewBox="0 0 1000 800"
+     role="img" aria-labelledby="loop-title loop-desc">
+  <title id="loop-title">The closed AriadneBuddy research loop</title>
+  <desc id="loop-desc">A ring of fluted columns for the readiness, literature, hypothesis, pathway,
+    discovery, filtering, nomination, audit, experiment and validation stages, laurel branches at the
+    three human gates, a handoff column, and Ariadne's thread carrying the iterate decision from
+    validation back to hypothesis.</desc>
+  <style>
+    :root {
+      --paper: #fbfbfa;
+      --paper-raised: #ffffff;
+      --paper-soft: #f2f2f1;
+      --paper-deep: #ebebea;
+      --marble: #f4f1ea;
+      --ink: #242424;
+      --ink-strong: #151515;
+      --ink-muted: #595959;
+      --aegean: #1f5688;
+      --terracotta: #a8452c;
+      --olive: #4f6021;
+      --line: rgb(0 0 0 / 0.13);
+      --line-strong: rgb(0 0 0 / 0.32);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #171717;
+        --paper-raised: #202020;
+        --paper-soft: #242424;
+        --paper-deep: #111111;
+        --marble: #232323;
+        --ink: #e8e8e8;
+        --ink-strong: #f5f5f5;
+        --ink-muted: #bdbdbd;
+        --aegean: #7fb2d9;
+        --terracotta: #e08a63;
+        --olive: #a3b86a;
+        --line: rgb(255 255 255 / 0.16);
+        --line-strong: rgb(255 255 255 / 0.35);
+      }
+    }
+    text { font-family: "Cormorant Garamond Variable", "Noto Serif SC Variable", "Songti SC", Georgia, serif; }
+    .sans { font-family: system-ui, "PingFang SC", "Noto Sans SC", sans-serif; }
+    .canvas { fill: var(--paper); }
+    .frame { stroke: var(--ink); stroke-width: 2.2; fill: none; opacity: 0.62; }
+    .hairline { fill: none; stroke: var(--line); stroke-width: 1; }
+    .shaft { fill: var(--marble); stroke: var(--line-strong); stroke-width: 1; }
+    .cap { fill: var(--paper-deep); stroke: var(--line-strong); stroke-width: 1; }
+    .flute { stroke: var(--line-strong); stroke-width: 1; fill: none; }
+    .label { fill: var(--ink); font-size: 19px; }
+    .gate-label { fill: var(--ink-muted); font-size: 15px; font-style: italic; }
+    .stage { fill: var(--ink); font-size: 16px; }
+    .legend { fill: var(--ink-muted); font-size: 16px; }
+    .swatch-label { fill: var(--ink-muted); font-size: 13px; }
+    .flow { stroke: var(--ink); stroke-width: 1.6; fill: none; opacity: 0.72; }
+    .thread { stroke: var(--aegean); stroke-width: 3.2; fill: none; stroke-linecap: round; }
+    .thread-chip { fill: var(--paper); stroke: var(--aegean); stroke-width: 1.2; }
+    .thread-text { fill: var(--aegean); font-size: 16px; }
+    .laurel-stem { stroke: var(--olive); stroke-width: 2; fill: none; }
+    .laurel-leaf { fill: var(--olive); }
+    .halo { fill: var(--paper); }
+    .swatch { stroke: var(--line-strong); stroke-width: 1; }
+    .heading { fill: var(--ink-strong); font-size: 34px; font-weight: 600; }
+    .subheading { fill: var(--ink-muted); font-size: 15px; }
+  </style>
+  <defs>
+    <g id="key-tile">
+      <path class="frame" d="M0 25 H28" />
+      <path class="frame" d="M2 25 V4 H18 V15 H10 V9" />
+    </g>
+    <pattern id="key" width="28" height="28" patternUnits="userSpaceOnUse">
+      <use href="#key-tile" />
+    </pattern>
+    <pattern id="key-vertical" width="28" height="28" patternUnits="userSpaceOnUse"
+             patternTransform="rotate(90)">
+      <use href="#key-tile" />
+    </pattern>
+    <g id="column">
+      <rect class="cap" x="-17" y="-38" width="34" height="7" />
+      <rect class="shaft" x="-13" y="-31" width="26" height="62" />
+      <path class="flute" d="M-6.5 -27 V27 M0 -27 V27 M6.5 -27 V27" />
+      <rect class="cap" x="-17" y="31" width="34" height="7" />
+    </g>
+    <g id="laurel">
+      <circle class="halo" r="17" />
+      <path class="laurel-stem" d="M-12 12 C -15 2, -13 -8, -3 -14" />
+      <path class="laurel-stem" d="M12 12 C 15 2, 13 -8, 3 -14" />
+      <ellipse class="laurel-leaf" transform="translate(-12 8) rotate(-42)" rx="5.2" ry="2.5" />
+      <ellipse class="laurel-leaf" transform="translate(-13 1) rotate(-24)" rx="5.2" ry="2.5" />
+      <ellipse class="laurel-leaf" transform="translate(-11 -6) rotate(-6)" rx="5.2" ry="2.5" />
+      <ellipse class="laurel-leaf" transform="translate(-6 -12) rotate(22)" rx="5.2" ry="2.5" />
+      <ellipse class="laurel-leaf" transform="translate(12 8) rotate(42)" rx="5.2" ry="2.5" />
+      <ellipse class="laurel-leaf" transform="translate(13 1) rotate(24)" rx="5.2" ry="2.5" />
+      <ellipse class="laurel-leaf" transform="translate(11 -6) rotate(6)" rx="5.2" ry="2.5" />
+      <ellipse class="laurel-leaf" transform="translate(6 -12) rotate(-22)" rx="5.2" ry="2.5" />
+      <path class="laurel-stem" d="M-4 14 L0 17 L4 14" />
+    </g>
+    <marker id="arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5"
+            markerHeight="6.5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink)" opacity="0.72" />
+    </marker>
+    <marker id="arrow-thread" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6"
+            markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--aegean)" />
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1000" height="36" fill="url(#key)" />
+  <rect x="0" y="764" width="1000" height="36" fill="url(#key)" />
+  <rect x="0" y="0" width="36" height="800" fill="url(#key-vertical)" />
+  <rect x="964" y="0" width="36" height="800" fill="url(#key-vertical)" />
+
+  <rect class="canvas" x="36" y="36" width="928" height="728" />
+  <rect class="hairline" x="36.5" y="36.5" width="927" height="727" />
+
+  <text class="heading" x="500" y="92" text-anchor="middle">The closed research loop</text>
+  <text class="sans subheading" x="500" y="118" text-anchor="middle">computational nomination &#8594;
+    experimental design &#8594; validation interpretation &#8594; iterative optimization</text>
+
+  <use href="#column" transform="translate(180 170)" />
+  <use href="#column" transform="translate(400 170)" />
+  <use href="#column" transform="translate(620 170)" />
+  <use href="#column" transform="translate(840 170)" />
+  <use href="#column" transform="translate(900 290)" />
+  <use href="#column" transform="translate(900 420)" />
+  <use href="#column" transform="translate(900 550)" />
+  <use href="#column" transform="translate(840 640)" />
+  <use href="#column" transform="translate(620 640)" />
+  <use href="#column" transform="translate(400 640)" />
+  <use href="#column" transform="translate(100 550)" />
+
+  <path class="flow" d="M197 170 H383" marker-end="url(#arrow-ink)" />
+  <path class="flow" d="M417 170 H603" marker-end="url(#arrow-ink)" />
+  <path class="flow" d="M637 170 H823" marker-end="url(#arrow-ink)" />
+  <path class="flow" d="M840 212 V290 H883" marker-end="url(#arrow-ink)" />
+  <path class="flow" d="M900 330 V380" marker-end="url(#arrow-ink)" />
+  <path class="flow" d="M900 460 V510" marker-end="url(#arrow-ink)" />
+  <path class="flow" d="M900 590 V640 H857" marker-end="url(#arrow-ink)" />
+  <path class="flow" d="M823 640 H637" marker-end="url(#arrow-ink)" />
+  <path class="flow" d="M603 640 H417" marker-end="url(#arrow-ink)" />
+  <path class="flow" d="M384 640 H250 V594" marker-end="url(#arrow-ink)" />
+
+  <use href="#laurel" transform="translate(730 170) scale(1.15)" />
+  <use href="#laurel" transform="translate(730 640) scale(1.15)" />
+  <use href="#laurel" transform="translate(250 640) scale(1.15)" />
+
+  <path class="thread" d="M400 598 C 400 440, 620 450, 620 212" marker-end="url(#arrow-thread)" />
+  <rect class="thread-chip" x="428" y="420" width="164" height="30" rx="2" />
+  <text class="thread-text" x="510" y="440" text-anchor="middle">iterate (&#8804; 4 rounds)</text>
+
+  <text class="label" x="180" y="232" text-anchor="middle">readiness</text>
+  <text class="label" x="400" y="232" text-anchor="middle">literature</text>
+  <text class="label" x="620" y="232" text-anchor="middle">hypothesis</text>
+  <text class="label" x="840" y="232" text-anchor="middle">pathway</text>
+  <text class="label" x="872" y="295" text-anchor="end">discovery</text>
+  <text class="label" x="872" y="425" text-anchor="end">filtering</text>
+  <text class="label" x="872" y="555" text-anchor="end">nomination</text>
+  <text class="label" x="840" y="696" text-anchor="middle">audit</text>
+  <text class="label" x="620" y="696" text-anchor="middle">experiment</text>
+  <text class="label" x="400" y="696" text-anchor="middle">validation</text>
+  <text class="label" x="128" y="556" text-anchor="start">handoff</text>
+
+  <text class="gate-label" x="730" y="146" text-anchor="middle">approve</text>
+  <text class="gate-label" x="730" y="616" text-anchor="middle">approve</text>
+  <text class="gate-label" x="250" y="616" text-anchor="middle">conclude</text>
+
+  <use href="#column" transform="translate(82 738) scale(0.5)" />
+  <text class="sans legend" x="110" y="744">stage</text>
+  <use href="#laurel" transform="translate(180 738) scale(0.62)" />
+  <text class="sans legend" x="206" y="744">human gate</text>
+  <path class="thread" d="M310 738 H374" marker-end="url(#arrow-thread)" />
+  <text class="sans legend" x="386" y="744">iterate (Ariadne&#8217;s thread)</text>
+
+  <rect class="swatch" x="580" y="724" width="22" height="22" fill="var(--paper)" />
+  <rect class="swatch" x="614" y="724" width="22" height="22" fill="var(--ink)" />
+  <rect class="swatch" x="648" y="724" width="22" height="22" fill="var(--aegean)" />
+  <rect class="swatch" x="682" y="724" width="22" height="22" fill="var(--terracotta)" />
+  <rect class="swatch" x="716" y="724" width="22" height="22" fill="var(--olive)" />
+  <text class="sans swatch-label" x="591" y="762" text-anchor="middle">paper</text>
+  <text class="sans swatch-label" x="625" y="762" text-anchor="middle">ink</text>
+  <text class="sans swatch-label" x="659" y="762" text-anchor="middle">aegean</text>
+  <text class="sans swatch-label" x="693" y="762" text-anchor="middle">terracotta</text>
+  <text class="sans swatch-label" x="727" y="762" text-anchor="middle">olive</text>
+</svg>

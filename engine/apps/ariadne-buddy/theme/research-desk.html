@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en" data-color-scheme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#fbfbfa" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#171717" media="(prefers-color-scheme: dark)" />
+    <meta name="description" content="AriadneBuddy research desk — the auditable record of a multi-agent scientific-discovery loop." />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <title>AriadneBuddy — Research Desk</title>
+    <script src="/boot.js"></script>
+    <link rel="stylesheet" href="/assets/ariadne-appearance.css" />
+    <link rel="stylesheet" href="/research-desk.css" />
+    <script type="module" src="/research-desk.js"></script>
+  </head>
+  <body>
+    <main>
+      <p id="notice" class="notice" role="status" hidden>
+        <span id="notice-text" class="notice-text"></span>
+        <button id="notice-dismiss" class="notice-dismiss" type="button" hidden data-copy="dismiss">Dismiss</button>
+      </p>
+      <div id="state" class="empty-state" aria-live="polite"></div>
+      <article id="task" hidden>
+        <header class="task-header" id="task-header">
+          <h1 id="task-objective"></h1>
+          <div class="task-header-foot">
+            <div id="task-metadata" class="meta-row"></div>
+            <div id="session-controls" class="session-controls">
+              <button id="new-afpk-task" class="button" type="button" data-copy="newAfpkTask">New AFPK task</button>
+              <button id="refresh" class="button button-quiet" type="button" data-copy="refresh">Refresh</button>
+            </div>
+          </div>
+          <div class="workspace-frieze" aria-hidden="true"></div>
+        </header>
+        <details id="session-activity" class="session-activity">
+          <summary aria-expanded="false">
+            <span data-copy="activity">Activity and files</span>
+            <span id="session-activity-meta" class="meta-text session-activity-meta"></span>
+          </summary>
+          <nav id="tabs" class="tabs" role="tablist" aria-label="Activity details" data-label="taskViews">
+            <button id="tab-compute" data-tab="compute" role="tab" aria-controls="activity-panel" aria-selected="true" type="button" data-copy="compute">Compute</button>
+            <button id="tab-artifacts" data-tab="artifacts" role="tab" aria-controls="activity-panel" aria-selected="false" tabindex="-1" type="button" data-copy="artifacts">Artifacts</button>
+            <button id="tab-trajectory" data-tab="trajectory" role="tab" aria-controls="activity-panel" aria-selected="false" tabindex="-1" type="button" data-copy="trajectory">Trajectory</button>
+          </nav>
+          <section id="activity-panel" role="tabpanel" aria-labelledby="tab-compute" tabindex="0"></section>
+        </details>
+        <section id="tab-panel" class="tab-panel" tabindex="-1" role="region" aria-label="Task record" data-label="taskRecord"></section>
+        <details id="desk-guide" class="desk-guide">
+          <summary data-copy="deskGuide">How this desk works</summary>
+          <div class="desk-guide-body">
+            <dl>
+              <dt data-copy="round">Round</dt>
+              <dd data-copy="roundHelp">A round is one pass of the loop from hypothesis to validation. The controller opens a new round only when you choose to iterate.</dd>
+              <dt data-copy="version">Version</dt>
+              <dd data-copy="versionHelp">Every decision advances the task version. If another surface records a decision first, the server answers 409 and the desk reloads instead of overwriting.</dd>
+              <dt data-copy="revision">Request revision</dt>
+              <dd data-copy="revisionHelp">A revision identifies one engine request. Artifacts and jobs are filed under the revision that produced them.</dd>
+              <dt data-copy="gates">Gates</dt>
+              <dd data-copy="gatesHelp">The loop stops at a gate whenever a human decision is required. Decisions are recorded as caller-declared with a written reason.</dd>
+            </dl>
+          </div>
+        </details>
+      </article>
+    </main>
+    <p id="announcer" class="visually-hidden" role="status" aria-live="polite"></p>
+    <dialog id="afpk-create-dialog" class="afpk-create-dialog" aria-labelledby="afpk-create-title">
+      <form id="afpk-create-form" class="afpk-create-form">
+        <h2 id="afpk-create-title" data-copy="newAfpkTask">New AFPK task</h2>
+        <label><span data-copy="afpkInputSource">Input source</span>
+          <select id="afpk-source">
+            <option value="request" data-copy="afpkSourceRequest">Project request JSON</option>
+            <option value="preset" data-copy="afpkSourcePreset" hidden disabled>Prepared example</option>
+            <option value="guided" data-copy="afpkSourceGuided">Project sequence and model files</option>
+          </select>
+        </label>
+        <fieldset id="afpk-source-request" class="afpk-create-fields">
+          <label><span data-copy="afpkRequestPath">Request JSON path</span>
+            <input id="afpk-request-path" type="text" list="afpk-request-options" required spellcheck="false" autocomplete="off" />
+          </label>
+          <datalist id="afpk-request-options"></datalist>
+        </fieldset>
+        <fieldset id="afpk-source-preset" class="afpk-create-fields" hidden disabled>
+          <label><span data-copy="afpkPreparedExample">Example</span><select id="afpk-preset" required></select></label>
+        </fieldset>
+        <fieldset id="afpk-source-guided" class="afpk-create-fields" hidden disabled>
+          <label id="afpk-protein-picker" hidden><span data-copy="afpkChooseProtein">Add a project FASTA</span><select id="afpk-protein-list"></select></label>
+          <label><span data-copy="afpkSequenceFiles">Protein FASTA paths</span>
+            <textarea id="afpk-proteins" rows="2" required spellcheck="false" aria-describedby="afpk-groups-hint"></textarea>
+          </label>
+          <span id="afpk-groups-hint" class="subtle" data-copy="afpkPathsPerLine">One project-relative path per line.</span>
+          <div class="afpk-create-models">
+            <label>FAS I HMM<input id="afpk-fas-i" list="afpk-model-options" type="text" required spellcheck="false" autocomplete="off" /></label>
+            <label>FAS II HMM<input id="afpk-fas-ii" list="afpk-model-options" type="text" required spellcheck="false" autocomplete="off" /></label>
+            <label>PKS HMM<input id="afpk-pks" list="afpk-model-options" type="text" required spellcheck="false" autocomplete="off" /></label>
+          </div>
+          <datalist id="afpk-model-options"></datalist>
+          <div class="afpk-create-window">
+            <label><span data-copy="afpkWindowMin">FAS I bit-score minimum</span><input id="afpk-window-min" type="number" step="any" required /></label>
+            <label><span data-copy="afpkWindowMax">FAS I bit-score maximum</span><input id="afpk-window-max" type="number" step="any" required /></label>
+          </div>
+          <details class="afpk-create-extra">
+            <summary data-copy="afpkOptionalEvidence">Reference and comparison inputs</summary>
+            <label><span data-copy="afpkAnchorIds">Reference sequence IDs</span><textarea id="afpk-anchors" rows="2" spellcheck="false" aria-describedby="afpk-anchors-hint"></textarea></label>
+            <span id="afpk-anchors-hint" class="subtle" data-copy="afpkAnchorsHint">Enter one sequence ID from the selected FASTA files per line.</span>
+            <label class="afpk-finder-checkbox"><input id="afpk-run-finder" type="checkbox" /><span data-copy="afpkRunFinder">Run original AFPK-finder</span></label>
+            <label><span data-copy="afpkPublishedFinderFiles">Published Finder table paths</span><textarea id="afpk-finder-files" rows="2" spellcheck="false" aria-describedby="afpk-groups-hint"></textarea></label>
+            <label><span data-copy="afpkPublishedPath">Published KS scores path</span><input id="afpk-published-ks" type="text" spellcheck="false" autocomplete="off" /></label>
+          </details>
+        </fieldset>
+        <label><span data-copy="afpkObjective">Research objective</span><input id="afpk-objective" type="text" required maxlength="8000" /></label>
+        <p id="afpk-input-status" class="subtle" role="status" hidden></p>
+        <p id="afpk-create-error" class="notice" data-tone="error" role="alert" hidden></p>
+        <div class="meta-row afpk-create-actions">
+          <button class="button" id="afpk-create-close" type="button" data-copy="afpkClose">Close</button>
+          <button class="button button-primary" id="afpk-create-start" type="submit" data-copy="afpkStart">Create and start screening</button>
+        </div>
+      </form>
+    </dialog>
+    <noscript>
+      <div class="noscript-card">
+        <div class="workspace-mark" aria-hidden="true"></div>
+        <h1>AriadneBuddy</h1>
+        <p>Enable JavaScript to open this research session.</p>
+        <p>请启用 JavaScript 以打开研究会话。</p>
+      </div>
+    </noscript>
+  </body>
+</html>

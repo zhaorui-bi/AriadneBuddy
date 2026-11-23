@@ -48,8 +48,18 @@ try {
     'harness/skills/ariadne/SKILL.md',
     'harness/skills/ariadne-campaign/SKILL.md',
     'harness/backend/ariadne_cli.py',
+    'harness/backend/afpk_ks.py',
+    'harness/backend/afpk_finder_runner.py',
     'web-ui/index.html',
     'web-ui/favicon.ico',
+    'web-ui/ariadne-logo.svg',
+    'web-ui/research-desk.html',
+    'web-ui/research-desk.css',
+    'web-ui/research-desk.js',
+    'web-ui/research-launcher.js',
+    'web-ui/assets/ariadne-appearance.css',
+    'brand/appearance.css',
+    'brand/logo.svg',
     'licenses/ARIADNE_BUDDY_LICENSE',
     'licenses/KIMI_CODE_LICENSE',
     'licenses/ARIADNE_UPSTREAM_LICENSE',
@@ -61,7 +71,15 @@ try {
     assertFile(path.join(resources, relativePath), `packaged resource ${relativePath}`);
   }
   assertPackagedVersions(resources, productVersion);
+  assertSameFile(
+    path.join(root, 'engine/apps/ariadne-buddy/theme/appearance.css'),
+    path.join(resources, 'brand/appearance.css'),
+    'packaged desktop palette',
+  );
   assertNoPythonCache(path.join(resources, 'harness/backend'));
+  for (const relativePath of ['web-ui/ariadne-logo.svg', 'brand/logo.svg']) {
+    assertSameFile(path.join(root, 'build/logo.svg'), path.join(resources, relativePath), relativePath);
+  }
   assertSameFile(
     path.join(root, 'build/icon.ico'),
     path.join(resources, 'web-ui/favicon.ico'),
@@ -278,6 +296,16 @@ function redact(text) {
 }
 
 async function verifyDesktopStartupOutput() {
+  const splashProbe = createStartupProbe();
+  const lightSplash = splashProbe.splash('light');
+  assert.match(lightSplash, /data-color-scheme="light"/);
+  assert.match(lightSplash, /科学发现工作台/);
+  assert.match(lightSplash, /正在启动科研工作台/);
+  assert.match(lightSplash, /--tb-paper: light-dark\(#fbfbfa, #171717\)/);
+  assert.doesNotMatch(lightSplash, /水处理|water treatment/i);
+  assert.match(splashProbe.splash('dark'), /data-color-scheme="dark"/);
+  assert.match(splashProbe.splash('system'), /data-color-scheme="system"/);
+
   const url = 'http://127.0.0.1:58627/#token=desktop-startup-test-token';
   const readyLine = `  Local:    ${url}\n`;
   for (let split = 1; split < readyLine.length; split++) {
@@ -324,7 +352,8 @@ function createStartupProbe() {
   };
   const probe = runInNewContext(
     `${readFileSync(path.join(root, 'main.js'), 'utf8')}
-      aquaHomeDir = () => testDirectory;
+      const renderSplash = showLoading;
+      ariadneHomeDir = () => testDirectory;
       importExistingConfig = () => {};
       isUsableDirectory = () => true;
       showLoading = () => {};
@@ -332,7 +361,16 @@ function createStartupProbe() {
       stopServer = async () => { serverProc = null; serverUrl = null; };
       handleServerFailure = (title) => failures.push(title);
       loadAppUrl = async (url) => { loaded.push(url); };
-      ({ start: () => startServer(testDirectory, 0), url: () => serverUrl });`,
+      ({
+        start: () => startServer(testDirectory, 0),
+        url: () => serverUrl,
+        splash: (scheme) => {
+          desktopColorScheme = scheme;
+          createMainWindow = () => ({ loadURL: async () => {} });
+          renderSplash('正在启动科研工作台…');
+          return decodeURIComponent(loadingUrl.slice(loadingUrl.indexOf(',') + 1));
+        },
+      });`,
     {
       require: (name) =>
         name === 'electron'

@@ -37,6 +37,9 @@ export function mcpEnvironment(
   copyEnvironmentValue(result, env, 'ARIADNE_COMMAND');
   copyEnvironmentValue(result, env, 'ARIADNE_REPO');
   copyEnvironmentValue(result, env, 'ARIADNE_PYTHON');
+  copyEnvironmentValue(result, env, 'ARIADNE_AFPK_PYTHON');
+  copyEnvironmentValue(result, env, 'ARIADNE_AFPK_FINDER_REPO');
+  copyEnvironmentValue(result, env, 'ARIADNE_AFPK_FINDER_BIN');
   copyEnvironmentValue(result, env, 'ARIADNE_WORKDIR');
   copyEnvironmentValue(result, env, 'ARIADNE_JOBS_DIR');
   copyEnvironmentValue(result, env, 'ARIADNE_ESM_MODEL');

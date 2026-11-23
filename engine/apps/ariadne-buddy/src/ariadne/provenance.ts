@@ -326,6 +326,15 @@ function collectInputReferences(
     case 'ariadne_research_discovery':
       add('nomination-request', 'requestFile');
       break;
+    case 'ariadne_research_afpk_ks':
+      add('nomination-request', 'requestFile');
+      add('protein-input', 'proteins');
+      add('ks-fas-i', 'fasI');
+      add('ks-fas-ii', 'fasII');
+      add('ks-pks', 'pks');
+      add('afpk-finder-output', 'clusterOutputs');
+      add('published-ks-scores', 'publishedKsScores');
+      break;
     case 'ariadne_research_filtering':
       add('candidates', 'candidates');
       break;

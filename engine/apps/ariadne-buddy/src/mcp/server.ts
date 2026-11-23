@@ -13,8 +13,9 @@ import {
 } from '../ariadne/tools';
 
 const homeDir = resolveAriadneHome();
+const workDir = resolveUserPath(process.env['ARIADNE_WORKDIR'] ?? process.cwd());
 const jobsRoot = resolveUserPath(
-  process.env['ARIADNE_JOBS_DIR'] ?? path.join(process.cwd(), 'ariadne-jobs'),
+  process.env['ARIADNE_JOBS_DIR'] ?? path.join(workDir, 'ariadne-jobs'),
 );
 
 const ctx: ToolContext = {

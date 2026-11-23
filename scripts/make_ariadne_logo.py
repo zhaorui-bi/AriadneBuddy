@@ -1,13 +1,10 @@
 """Install the official Ariadne mark as the AriadneBuddy brand (build/logo.png).
 
-The canonical mark is the left portion of the official Ariadne logo (the
-goddess line drawing — jeweled crown, crescent-and-stars halo, swirling hair —
-black line art on a white canvas). This script copies it into place so that
-scripts/make_icons.py can remove the white canvas and compose the parchment
-application tiles (black-figure pottery register) from the transparent mark.
+This copies the original black-on-white portrait so that scripts/make_icons.py
+can build the platform application icons. The UI uses the vector trace in
+build/logo.svg.
 
-Source of truth: build/logo-official.png. To change the brand, replace that
-file — never edit the generated artifacts.
+Source of truth: build/logo-official.png.
 
 Run: python3 scripts/make_ariadne_logo.py
 """

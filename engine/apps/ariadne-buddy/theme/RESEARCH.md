@@ -1,69 +1,15 @@
-# AriadneBuddy visual-research synthesis
+# AriadneBuddy 界面设计
 
-## Status
+设计语言与令牌参考见仓库根目录的 [`docs/DESIGN.md`](../../../../docs/DESIGN.md)（中文镜像
+[`docs/zh-CN/DESIGN.md`](../../../../docs/zh-CN/DESIGN.md)）。
 
-The visual direction is derived from the published Ariadne style language
-(`docs/stylesheets/extra.css` of the ariadne-tps repository): warm paper
-neutrals with one aegean-blue hue, serif display type, and scholarly restraint.
-AriadneBuddy extends it into the interactive workbench with an explicit ancient
-Greek/Roman reading: **marble parchment, aegean blue, verdigris, gold, and
-terracotta**, plus the meander (Greek key) fret as the single ornament — the
-thread through the labyrinth that names both the engine and the product.
+古希腊风格从现有 Ariadne 肖像延伸到界面。品牌区使用线刻肖像、柱槽、柱础与双线，标题沿用衬线字体。正文、表格和按钮使用同一套系统无衬线字体；状态同时用文字和颜色呈现。
 
-## Audience and task model
+| 用途 | 浅色 | 深色 |
+| --- | --- | --- |
+| 工作区画布 | `#fbfbfa` | `#171717` |
+| 侧栏 | `#f2f2f1` | `#1d1d1d` |
+| 内容面板 | `#ffffff` | `#202020` |
+| 主按钮 | `#242424` | `#404040` |
 
-AriadneBuddy hosts long, high-attention natural-product discovery sessions
-involving sequences, HMM scores, probabilities, pathways, candidates, evidence
-tables, and status signals. The interface therefore needs to optimize for:
-
-1. fast scanning and reliable hierarchy;
-2. low fatigue during long reading sessions;
-3. unambiguous action and status colors;
-4. clear Latin, Chinese, numerical and monospace text;
-5. visual credibility without imitating a journal page or a museum.
-
-Aesthetic preference alone is not sufficient evidence; the direction should be
-validated with representative bench scientists and bioinformaticians.
-
-## Palette (design tokens)
-
-| Role | Light | Dark | Source |
-| --- | --- | --- | --- |
-| Paper / canvas | `#f4f2f0` | `#161d27` | `--ariadne-paper` |
-| Surface soft / deep | `#eae6e1` / `#e2dcd2` | `#212730` / `#10161f` | derived paper ramp |
-| Ink / strong | `#252f3d` / `#1a222e` | `#ebe7e4` / `#f8f5f2` | `--ariadne-ink` |
-| Aegean blue (accent) | `#4b607c` | `#6a9fcc` | `--ariadne-blue` |
-| Verdigris (success / teal) | `#3f7f78` | `#a5d8d1` | `--ariadne-teal` |
-| Gold (warning) | `#8a6d1d` | `#e4bf77` | `--ariadne-gold` family |
-| Terracotta (danger) | `#8f3222` | `#dc9c94` | `--ariadne-red` |
-| Lines | `rgba(37,47,61,.14)` | `rgba(235,231,228,.16)` | `--ariadne-line` |
-
-The tokens are exposed as `--tb-*` custom properties in `theme/ariadne.css` and
-mapped onto the upstream bundle's `--color-*` contract, so both light and dark
-schemes stay consistent across every bundled component.
-
-## Typography
-
-- UI: system sans stack (`Schibsted Grotesk Variable` → `Helvetica Neue` →
-  PingFang/Noto Sans SC) for navigation, controls, tables, and dense content.
-- Display: `Cormorant Garamond Variable` + `Noto Serif SC` — reserved for the
-  brand wordmark, hero, and wizard titles; the classical serif carries the
-  Greek/Roman register without touching reading surfaces.
-- Numerals: tabular figures for scores, E-values, probabilities.
-
-## Ornament budget
-
-Exactly one ornament: the continuous meander fret beneath the sidebar brand
-block (single-line Greek key, 16px tile, aegean in light / verdigris in dark).
-Header datum lines, corner ticks on the first-run wizard, and the 32px
-instrument-paper grid carry structure; no ornament appears inside tables, code,
-plots, or message text.
-
-## Validation plan
-
-1. WCAG 2.2 AA contrast for text pairs on paper and dark surfaces.
-2. Long-session reading on representative transcripts (mixed Latin + CJK).
-3. Status-color discrimination (verdigris/gold/terracotta) under common
-   color-vision deficiencies.
-4. Screenshot diff of light/dark surfaces after each `sync-web-ui.mjs` run —
-   the branding contract already pins the palette tokens.
+`appearance.css` 提供对话、任务会话、设置和桌面启动页共用的颜色、边线、字体和组件尺寸。侧栏显示普通研究任务，已取消的普通任务可从「已归档任务」打开。AFPK 任务通过原会话链接打开。会话正文依次显示研究目标、运行记录、结果和审核，详细计算、产物和轨迹可从运行记录展开。

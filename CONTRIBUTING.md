@@ -16,7 +16,7 @@ npm run setup
 npm run check
 ```
 
-Use `npm start` for Electron and `./bin/ariadne web` for the browser interface.
+Use `npm start` for Electron and `./bin/ariadnebuddy web` for the browser interface.
 Most product tests use fake adapter-compatible commands; an Ariadne checkout
 and downloaded data are required only for real pipeline integration tests.
 
@@ -28,8 +28,9 @@ and downloaded data are required only for real pipeline integration tests.
   suitable for upstream; branded behavior must remain gated by the Ariadne
   host identity.
 - Do not edit generated `dist/` or `web-ui/` files directly.
-- Treat `build/logo.png` as the canonical brand source and regenerate derived
-  icons with `scripts/make_icons.py`.
+- Keep the original portrait in `build/logo-official.png` and its theme-aware
+  vector trace in `build/logo.svg`. Regenerate platform icons with
+  `scripts/make_ariadne_logo.py` and `scripts/make_icons.py`.
 - Preserve strict path, process, output-bound, configuration, and same-origin
   security boundaries.
 - Keep the Python adapter compatible with the public Ariadne project rather
@@ -58,11 +59,12 @@ supports current rimraf directly or no longer depends on temp.
 
 ## Engineering claims
 
-Describe outputs as evidence-grounded early-stage recommendations or benchmark
-results, not field-ready designs. Preserve units, evidence provenance,
-constraint failures, assumptions, uncertainty, and attempted-case denominators.
-Do not claim regulatory compliance or removal performance without direct,
-applicable evidence. See
+Describe outputs as evidence-grounded early-stage screening results, not demonstrated
+enzyme function. Preserve units, evidence provenance, constraint failures, assumptions,
+uncertainty, and attempted-case denominators. A nomination score is not activity: a
+candidate still requires heterologous expression and product confirmation before any
+claim of function. Do not claim field performance, clinical or regulatory suitability,
+or scientific effectiveness without direct, applicable evidence. See
 [`docs/SCIENTIFIC_WORKFLOWS.md`](./docs/SCIENTIFIC_WORKFLOWS.md).
 
 ## Validation
@@ -85,5 +87,5 @@ commands against a pinned Ariadne checkout. For desktop changes, also run
 
 Keep each pull request focused, explain behavior and risk, add tests, and update
 documentation/changelog when appropriate. Never commit credentials, `.env`
-files, private water-quality data, unpublished knowledge records, user homes,
+files, private sequence or structure data, unpublished knowledge records, user homes,
 job logs, generated Web bundles, caches, or packaged applications.

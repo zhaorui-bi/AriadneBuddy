@@ -12,7 +12,6 @@ import {
 } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
-
 import type { Event, KimiHarness, Session } from '@moonshot-ai/kimi-code-sdk';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -21,7 +20,7 @@ import { runDoctor, formatDoctorReport } from '../src/doctor';
 import { atomicWriteText } from '../src/fs-utils';
 import { createDefaultSession, promptTurnToEnd } from '../src/harness';
 import { ensureAriadneMcpJson, mcpEnvironment } from '../src/mcp/register';
-import { runOnboard } from '../src/onboard';
+import { runOnboard, runReset } from '../src/onboard';
 import { resolveAriadneHome, resolveUserPath } from '../src/paths';
 import { validateProviderBaseUrl } from '../src/providers';
 import { ariadneTuiEnvironment } from '../src/tui';
@@ -123,6 +122,87 @@ describe('CLI arguments', () => {
     ]) {
       expect(() => parseCliInvocation(args)).toThrow(CliArgumentError);
     }
+  });
+
+  it('reaches the terminal TUI, the reset and config surfaces, and the script-friendly run modes', () => {
+    expect(parseCliInvocation(['tui'])).toEqual({ kind: 'tui' });
+    expect(parseCliInvocation(['reset', '--home', 'home', '--yes'])).toEqual({
+      kind: 'reset', homeDir: 'home', keepJobs: false, yes: true,
+    });
+    expect(parseCliInvocation(['reset', '--home', 'home', '--keep-jobs', '--yes'])).toMatchObject({
+      kind: 'reset', keepJobs: true,
+    });
+    expect(parseCliInvocation(['reset', '--home', 'home'])).toMatchObject({ kind: 'reset', yes: false });
+    expect(parseCliInvocation(['config', 'show'])).toEqual({ kind: 'config', action: 'show', json: false });
+    expect(parseCliInvocation(['config', 'show', '--json'])).toEqual({ kind: 'config', action: 'show', json: true });
+    expect(parseCliInvocation(['run', '--quiet', '--', 'summarise'])).toMatchObject({
+      kind: 'run', prompt: 'summarise', quiet: true,
+    });
+    expect(parseCliInvocation(['run', '--json', '--', 'summarise'])).toMatchObject({
+      kind: 'run', prompt: 'summarise', json: true,
+    });
+    for (const args of [
+      ['config'],
+      ['config', 'unknown'],
+      ['run', '--quiet'],
+      ['run', '--json', '--quiet'],
+      ['chat', '--unknown'],
+    ]) {
+      expect(() => parseCliInvocation(args)).toThrow(CliArgumentError);
+    }
+  });
+
+  it('treats reset as a dry run until it is explicitly confirmed', async () => {
+    expect(parseCliInvocation(['reset'])).toMatchObject({ kind: 'reset', yes: false, keepJobs: false });
+    expect(parseCliInvocation(['reset', '--yes'])).toMatchObject({ kind: 'reset', yes: true });
+
+    // reset derives its job store from the environment, so pin every path it
+    // could resolve to before letting it remove anything.
+    const root = mkdtempSync(path.join(tmpdir(), 'ariadne-reset-'));
+    tempDirs.push(root);
+    const home = path.join(root, 'home');
+    const jobs = path.join(root, 'jobs');
+    const workdir = path.join(root, 'work');
+    mkdirSync(home, { recursive: true });
+    mkdirSync(jobs, { recursive: true });
+    mkdirSync(workdir, { recursive: true });
+    writeFileSync(path.join(home, 'config.toml'), 'default_model = "m"\n', 'utf8');
+    writeFileSync(path.join(home, 'ariadne.json'), '{}\n', 'utf8');
+
+    const previous = {
+      jobs: process.env['ARIADNE_JOBS_DIR'],
+      workdir: process.env['ARIADNE_WORKDIR'],
+    };
+    process.env['ARIADNE_JOBS_DIR'] = jobs;
+    process.env['ARIADNE_WORKDIR'] = workdir;
+    try {
+      await runReset({ homeDir: home, yes: false });
+      expect(existsSync(path.join(home, 'config.toml'))).toBe(true);
+      expect(existsSync(path.join(home, 'ariadne.json'))).toBe(true);
+      expect(existsSync(jobs)).toBe(true);
+
+      await runReset({ homeDir: home, yes: true });
+      expect(existsSync(home)).toBe(false);
+      expect(existsSync(jobs)).toBe(false);
+      expect(existsSync(workdir)).toBe(true);
+    } finally {
+      if (previous.jobs === undefined) delete process.env['ARIADNE_JOBS_DIR'];
+      else process.env['ARIADNE_JOBS_DIR'] = previous.jobs;
+      if (previous.workdir === undefined) delete process.env['ARIADNE_WORKDIR'];
+      else process.env['ARIADNE_WORKDIR'] = previous.workdir;
+    }
+  });
+
+  it('keeps the global telemetry and provider-probe flags out of the parsed command shape', () => {
+    expect(parseCliInvocation(['chat', '--no-telemetry'])).toEqual({ kind: 'chat' });
+    expect(parseCliInvocation(['web', '--no-telemetry', '--no-open'])).toMatchObject({ kind: 'web', noOpen: true });
+    expect(parseCliInvocation(['doctor', '--probe-model'])).toMatchObject({
+      kind: 'doctor', probe: false, probeModel: true,
+    });
+    expect(parseCliInvocation(['doctor', '--probe', '--probe-model'])).toMatchObject({
+      kind: 'doctor', probe: true, probeModel: true,
+    });
+    expect(() => parseCliInvocation(['doctor', '--probe-model', 'unexpected'])).toThrow(CliArgumentError);
   });
 });
 

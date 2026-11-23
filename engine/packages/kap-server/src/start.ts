@@ -121,6 +121,7 @@ export interface ServerStartOptions {
   readonly hostIdentity: ServerHostIdentity;
   readonly skillDirs?: readonly string[];
   readonly webAssetsDir?: string;
+  readonly registerHostRoutes?: (app: FastifyInstance) => void;
   readonly serverVersion?: string;
   readonly telemetry?: boolean;
 }
@@ -585,11 +586,11 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
     return reply.type('application/json').send(openApiDocument);
   });
 
-  if (opts.webAssetsDir !== undefined) {
-    await registerWebAssetRoutes(app, opts.webAssetsDir);
-  }
-
   try {
+    opts.registerHostRoutes?.(app);
+    if (opts.webAssetsDir !== undefined) {
+      await registerWebAssetRoutes(app, opts.webAssetsDir);
+    }
     await listenWithPortRetry({
       listen: (h, p) => app.listen({ host: h, port: p }),
       host,

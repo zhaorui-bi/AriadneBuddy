@@ -25,7 +25,7 @@ npm run release:check  # check + npm audit + runtime audit
 Only touch the brand via its sources — never edit generated artifacts:
 
 ```bash
-python3 scripts/make_ariadne_logo.py    # build/logo.png (canonical mark)
+python3 scripts/make_ariadne_logo.py    # build/logo.png for platform icons
 python3 scripts/make_icons.py && iconutil -c icns build/icon.iconset -o build/icon.icns
 npm run sync:web                        # branded web-ui/ (contract-asserted)
 ```

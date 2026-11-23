@@ -24,8 +24,15 @@ const productRoot = path.resolve(pkgRoot, '..', '..', '..');
 const SRC = path.resolve(pkgRoot, '..', 'kimi-code', 'dist-web');
 const DST = path.join(pkgRoot, 'web-ui');
 const FAVICON = path.join(productRoot, 'build', 'icon.ico');
-const MARK = path.join(productRoot, 'build', 'logo-256.png');
+const MARK = path.join(productRoot, 'build', 'logo.svg');
 const THEME = path.join(pkgRoot, 'theme', 'ariadne.css');
+const APPEARANCE = path.join(pkgRoot, 'theme', 'appearance.css');
+const appearanceSource = readFileSync(APPEARANCE, 'utf8');
+const paperPalette = /--tb-paper: light-dark\((#[0-9a-f]{6}), (#[0-9a-f]{6})\)/.exec(appearanceSource);
+if (!paperPalette) throw new Error('Shared appearance must declare light and dark canvas colors.');
+const [, lightPaper, darkPaper] = paperPalette;
+const themeMeta = (color, scheme) => `<meta name="theme-color" content="${color}" media="(prefers-color-scheme: ${scheme})" />`;
+const nativeColors = `const Cw={light:"${lightPaper}",dark:"${darkPaper}"}`;
 const PRODUCT_VERSION = JSON.parse(
   readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'),
 ).version;
@@ -44,6 +51,7 @@ const FONT_PACKAGES = [
 ];
 
 const TEXT_REPLACEMENTS = [
+  ['<html lang="en">', '<html lang="en" data-color-scheme="light">'],
   [
     'Title generation unavailable — needs a managed Kimi Code login and at least one message',
     'Title generation unavailable — requires a managed account and at least one message',
@@ -56,19 +64,24 @@ const TEXT_REPLACEMENTS = [
   ['Kimi Code', 'AriadneBuddy'],
   [
     '<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />',
-    '<meta name="theme-color" content="#f4f2f0" media="(prefers-color-scheme: light)" />',
+    themeMeta(lightPaper, 'light'),
   ],
   [
     '<meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />',
-    '<meta name="theme-color" content="#161d27" media="(prefers-color-scheme: dark)" />',
+    themeMeta(darkPaper, 'dark'),
   ],
   ['The AI coding workbench for professional developers', 'The AI research workbench for multi-agent natural-product discovery'],
   ['为专业开发者打造的 AI 编程工作台', '面向多智能体天然产物科学发现的 AI 科研工作台'],
+  ['placeholder:"Type a message…"', 'placeholder:"Ask a research question or add files…"'],
+  ['quickStartPlaceholder:"Type a message to start a new conversation…"', 'quickStartPlaceholder:"Ask a research question or add files…"'],
+  ['placeholder:"输入消息…"', 'placeholder:"提出研究问题，或添加文件…"'],
+  ['quickStartPlaceholder:"输入消息开始新对话…"', 'quickStartPlaceholder:"提出研究问题，或添加文件…"'],
   ['signIn:"Sign in"', 'signIn:"Set up model"'],
   ['signIn:"登录"', 'signIn:"配置模型"'],
   ['action:"Sign in"', 'action:"Set up model"'],
   ['action:"登录"', 'action:"配置模型"'],
-  ['class:"wordmark",viewBox:"0 0 304.035 64"', 'class:"wordmark",viewBox:"0 0 348 86"'],
+  ['class:"wordmark",viewBox:"0 0 304.035 64"', 'class:"wordmark",viewBox:"0 0 348 174"'],
+  ['class:"ch-logo",viewBox:"0 0 32 22"', 'class:"ch-logo",viewBox:"0 0 32 32"'],
   [
     'light:"Moon bright",dark:"Moon dark",system:"System"',
     'light:"Light",dark:"Dark",system:"System"',
@@ -81,7 +94,7 @@ const TEXT_REPLACEMENTS = [
   ],
   [
     'const Cw={light:"#ffffff",dark:"#121212"}',
-    'const Cw={light:"#f4f2f0",dark:"#161d27"}',
+    nativeColors,
   ],
   [
     'light:"月之亮面",dark:"月之暗面",system:"跟随系统"',
@@ -145,8 +158,6 @@ const TEXT_REPLACEMENTS = [
   ['goToLogin:"去登录"', 'goToLogin:"配置模型"'],
   ['requiredTitle:"Sign in required"', 'requiredTitle:"Model setup required"'],
   ['requiredTitle:"请先登录"', 'requiredTitle:"请先配置模型"'],
-  ['rcLead:"This Remote Control session requires authorization. Sign in with your Kimi account to continue."', 'rcLead:"This Remote Control session requires authorization. Sign in to continue."'],
-  ['rcLead:"远程控制功能需要登录后使用。使用 Kimi 账号登录即可继续。"', 'rcLead:"远程控制功能需要登录后使用。登录后即可继续。"'],
   // settings: remove the Lab tab
   [',{id:"lab",labelKey:"settings.tabs.lab",icon:"flask"}', ''],
   // About page: keep only "Version & updates" — drop Diagnostics and Agreements
@@ -164,18 +175,41 @@ const TEXT_REPLACEMENTS = [
 // Drop the whole managed "Kimi Subscription" group (heading + rows) from the
 // Model Providers settings page; the API-providers group right after it stays.
 
+// The upstream bundle has renamed its palette tokens more than once, and a
+// literal that stops matching silently stops repainting the accent — the brand
+// would degrade with a green build. Every entry below is therefore counted and
+// asserted to have matched at least once across the bundle (see
+// assertReplacementCoverage). Values mirror the classical ramp in
+// theme/appearance.css: aegean #1f5688 / #7fb2d9, aegean-deep #173f66 / #a8cbe6,
+// parchment #EDEAE4, terracotta #a8452c.
 const CSS_REPLACEMENTS = [
-  ['--logo: #1783ff', '--logo: #4B607C'],
-  ['--logo: #1a88ff', '--logo: #6A9FCC'],
-  // Brand accent: accessible aegean blue derived from the Ariadne style tokens.
-  ['--color-accent: #1783ff', '--color-accent: #4B607C'],
-  ['--color-accent: #1a88ff', '--color-accent: #6A9FCC'],
-  ['--color-accent-hover: #258eff', '--color-accent-hover: #3D5068'],
-  ['--color-accent-soft: rgba(26, 136, 255, .1)', '--color-accent-soft: rgba(75, 96, 124, .12)'],
+  // Light scheme.
+  ['--color-accent: #1783ff', '--color-accent: #1f5688'],
+  ['--color-accent-hover: #167ff7', '--color-accent-hover: #173f66'],
   ['--color-accent-soft: #e8f3ff', '--color-accent-soft: #EDEAE4'],
-  ['--color-accent-bd: rgba(26, 136, 255, .28)', '--color-accent-bd: rgba(75, 96, 124, .32)'],
-  ['--blue: #1a88ff', '--blue: #4B607C'],
-  ['--markdown-link-color: light-dark(#0f6ef2, #3393ff)', '--markdown-link-color: light-dark(#4B607C, #6A9FCC)'],
+  ['--color-info: #1783ff', '--color-info: #1f5688'],
+  ['--blue: #1783ff', '--blue: #1f5688'],
+  ['--blue2: #167ff7', '--blue2: #173f66'],
+  ['--soft: #e8f3ff', '--soft: #EDEAE4'],
+  ['--bd: rgba(23, 131, 255, .25)', '--bd: rgba(31, 86, 136, .25)'],
+  ['--logo: #1783ff', '--logo: #1f5688'],
+  ['--bluebg: #e8f3ff', '--bluebg: #EDEAE4'],
+  ['--blueln: rgba(23, 131, 255, .25)', '--blueln: rgba(31, 86, 136, .25)'],
+  ['--star: #eab308', '--star: #a8452c'],
+  ['--markdown-link-color: light-dark(#0f6ef2, #3393ff)', '--markdown-link-color: light-dark(#1f5688, #7fb2d9)'],
+  // Dark and system schemes (the bundle declares both identically).
+  ['--color-accent: #1a88ff', '--color-accent: #7fb2d9'],
+  ['--color-accent-hover: #258eff', '--color-accent-hover: #a8cbe6'],
+  ['--color-accent-soft: rgba(26, 136, 255, .1)', '--color-accent-soft: rgba(127, 178, 217, .12)'],
+  ['--color-accent-bd: rgba(26, 136, 255, .28)', '--color-accent-bd: rgba(127, 178, 217, .28)'],
+  ['--p-selection: rgba(26, 136, 255, .2)', '--p-selection: rgba(127, 178, 217, .22)'],
+  ['--color-code-selection: rgba(26, 136, 255, .27)', '--color-code-selection: rgba(127, 178, 217, .3)'],
+  ['--color-info: #1a88ff', '--color-info: #7fb2d9'],
+  ['--blue: #1a88ff', '--blue: #7fb2d9'],
+  ['--blue2: #258eff', '--blue2: #a8cbe6'],
+  ['--soft: rgba(26, 136, 255, .1)', '--soft: rgba(127, 178, 217, .12)'],
+  ['--bd: rgba(26, 136, 255, .28)', '--bd: rgba(127, 178, 217, .28)'],
+  ['--logo: #1a88ff', '--logo: #7fb2d9'],
 ];
 
 const FONT =
@@ -188,7 +222,7 @@ for (const [label, filePath] of [
 ]) {
   if (!existsSync(filePath)) throw new Error(`Ariadne ${label} not found at ${filePath}`);
 }
-const markDataUri = `data:image/png;base64,${readFileSync(MARK).toString('base64')}`;
+const markSvg = readFileSync(MARK, 'utf8').trim().replaceAll('\n', '');
 
 const REGEX_REPLACEMENTS = [
   {
@@ -201,75 +235,22 @@ const REGEX_REPLACEMENTS = [
 // Keep the upstream Kimi "K" icon for Kimi providers. Product-level marks
 // (sidebar, empty state, and loading screen) remain branded as AriadneBuddy.
 
-function gradientBadge(id, rect, ellipse, bar, scope) {
-  return [
-    `<defs ${scope}><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1" ${scope}>`,
-    `<stop offset="0" stop-color="#63CAF7" ${scope}></stop>`,
-    `<stop offset="1" stop-color="#558BF4" ${scope}></stop></linearGradient></defs>`,
-    `<rect ${rect} fill="url(#${id})" ${scope}></rect>`,
-    `<ellipse ${ellipse} fill="none" stroke="#fff" ${scope}></ellipse>`,
-    `<rect ${bar} fill="#fff" ${scope}></rect>`,
-  ].join('');
+function positionedMark(x, y, size, scope) {
+  return markSvg.replace('<svg ', `<svg class="ariadne-logo" x="${x}" y="${y}" width="${size}" height="${size}" ${scope} `);
 }
 
-function markImage(x, y, size, scope, fallback) {
-  if (markDataUri !== undefined) {
-    return `<image href="${markDataUri}" x="${x}" y="${y}" width="${size}" height="${size}" ${scope}></image>`;
-  }
-  return fallback;
-}
-
-// Hero wordmark (empty-session view): canonical mark, product name, and domain line.
-// The official Ariadne mark is portrait line art, so the box is tall (348x86)
-// and the mark renders at full height beside the wordmark.
+// Empty-session wordmark with the canonical portrait above the title.
 const HERO_INNER =
-  markImage(
-    4,
-    3,
-    80,
-    'data-v-77dd99b8',
-    gradientBadge(
-      'tbHeroG',
-      'x="4" y="4" width="76" height="76" rx="13"',
-      'cx="42" cy="42" rx="19" ry="19" stroke-width="4.8"',
-      'x="27" y="39.6" width="30" height="4.8" rx="2.4"',
-      'data-v-77dd99b8',
-    ),
-  ) +
-  `<text class="tb-wordmark-title" x="84" y="52" font-family="${FONT}" font-size="43" font-weight="700" letter-spacing="-0.35" fill="currentColor" data-v-77dd99b8>AriadneBuddy</text>` +
-  '<text class="tb-wordmark-subtitle" x="86" y="74" font-size="9" font-weight="650" letter-spacing="1.25" fill="currentColor" data-v-77dd99b8>SCIENTIFIC DISCOVERY WORKBENCH</text>';
+  positionedMark(115, 3, 118, 'data-v-77dd99b8') +
+  `<text class="tb-wordmark-title" x="174" y="155" text-anchor="middle" font-family="${FONT}" font-size="49" font-weight="650" letter-spacing="-0.4" fill="currentColor" data-v-77dd99b8>AriadneBuddy</text>`;
 
-// Sidebar logo, viewBox 0 0 32 22: logo mark filling the full rail height.
-const SIDE_INNER = markImage(
-  7,
-  0,
-  22,
-  'data-v-71425e11',
-  gradientBadge(
-    'tbSideG',
-    'x="1" y="1" width="30" height="20" rx="6"',
-    'cx="16" cy="11" rx="7.2" ry="6.4" stroke-width="2.4"',
-    'x="10" y="9.9" width="12" height="2.2" rx="1.1"',
-    'data-v-71425e11',
-  ),
-);
+// Sidebar mark uses the same square geometry as the Research Desk.
+const SIDE_INNER = positionedMark(0, 0, 32, 'data-v-71425e11');
 
 // Connecting splash logo (GlobalLoading), viewBox 0 0 96 32: centered mark.
 const GLOAD_INNER =
   `<svg class="gload-logo" viewBox="0 0 96 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" data-v-f0064e51>` +
-  markImage(
-    35,
-    0,
-    32,
-    'data-v-f0064e51',
-    gradientBadge(
-      'tbLoadG',
-      'x="35" y="1" width="30" height="30" rx="8"',
-      'cx="50" cy="16" rx="8" ry="8" stroke-width="2.8"',
-      'x="43.5" y="14.9" width="13" height="2.4" rx="1.2"',
-      'data-v-f0064e51',
-    ),
-  ) +
+  positionedMark(35, 0, 32, 'data-v-f0064e51') +
   '</svg>';
 
 const SVG_REPLACEMENTS = [
@@ -320,15 +301,20 @@ function installThemeAssets() {
     }
   }
 
-  return `${fontCss.join('\n')}\n${readFileSync(THEME, 'utf8')}`;
+  return `${fontCss.join('\n')}\n${appearanceSource}`;
 }
 
-const CSS_APPEND = installThemeAssets();
+const appearanceCss = installThemeAssets();
+const CSS_APPEND = `${appearanceCss}\n${readFileSync(THEME, 'utf8')}`;
 
 let patchedFiles = 0;
 let patchedStrings = 0;
 let themedStylesheets = 0;
+let regexReplacementCount = 0;
 const svgReplacementCounts = new Map(SVG_REPLACEMENTS.map(({ anchor }) => [anchor, 0]));
+const replacementCounts = new Map(
+  [...TEXT_REPLACEMENTS, ...CSS_REPLACEMENTS].map(([from]) => [from, 0]),
+);
 
 function patchText(filePath, replacements) {
   const original = readFileSync(filePath, 'utf8');
@@ -338,6 +324,7 @@ function patchText(filePath, replacements) {
     if (count > 0) {
       text = text.split(from).join(to);
       patchedStrings += count;
+      replacementCounts.set(from, (replacementCounts.get(from) ?? 0) + count);
     }
   }
   if (text !== original) {
@@ -350,15 +337,38 @@ function patchRegex(filePath, replacements) {
   const original = readFileSync(filePath, 'utf8');
   let text = original;
   for (const { pattern, replace } of replacements) {
-    const next = text.replace(pattern, () => {
+    const before = text;
+    text = text.replace(pattern, () => {
       patchedStrings += 1;
       return replace;
     });
-    text = next;
+    if (text !== before) regexReplacementCount += 1;
   }
   if (text !== original) {
     writeFileSync(filePath, text);
     patchedFiles += 1;
+  }
+}
+
+// A declared replacement that matches nothing is a silently skipped brand
+// change: the pipeline reports success while the shipped product keeps the
+// upstream look. Fail the sync instead.
+function assertReplacementCoverage() {
+  const skipped = [];
+  for (const [from, count] of replacementCounts) {
+    if (count === 0) skipped.push(from.length > 90 ? `${from.slice(0, 90)}…` : from);
+  }
+  if (skipped.length > 0) {
+    throw new Error(
+      `branding contract failed: ${String(skipped.length)} replacement(s) matched nothing in the bundle:\n` +
+      skipped.map((entry) => `  - ${entry}`).join('\n') +
+      '\nThe upstream bundle changed its text; update sync-web-ui.mjs before shipping.',
+    );
+  }
+  if (regexReplacementCount !== REGEX_REPLACEMENTS.length) {
+    throw new Error(
+      `branding contract failed: ${String(REGEX_REPLACEMENTS.length - regexReplacementCount)} structural removal(s) matched nothing`,
+    );
   }
 }
 
@@ -418,36 +428,53 @@ if (existsSync(FAVICON)) {
   copyFileSync(FAVICON, path.join(DST, 'favicon.ico'));
   console.log('web-ui: favicon.ico replaced with Ariadne icon');
 }
-if (markDataUri !== undefined) {
-  copyFileSync(MARK, path.join(DST, 'ariadne-logo.png'));
-  console.log('web-ui: canonical brand mark embedded and copied from build/logo-256.png');
+copyFileSync(MARK, path.join(DST, 'ariadne-logo.svg'));
+console.log('web-ui: vector mark embedded and copied from build/logo.svg');
+for (const asset of ['research-desk.html', 'research-desk.css', 'research-desk.js', 'research-launcher.js']) {
+  copyFileSync(path.join(pkgRoot, 'theme', asset), path.join(DST, asset));
 }
+writeFileSync(path.join(DST, 'assets', 'ariadne-appearance.css'), appearanceCss);
 console.log(`web-ui: bundled ${FONT_PACKAGES.length} self-hosted theme font families`);
 
-// Cache-bust: the server sends /assets with `immutable, max-age=1y` while our
-// patches keep the original hash filenames, so stamp a content-version query
-// onto every asset URL in index.html to force revalidation after each sync.
+// The server caches assets by URL. Version the patched bundle and the shared
+// workspace assets so both pages pick up a new appearance after an update.
 {
   const indexPath = path.join(DST, 'index.html');
-  let html = readFileSync(indexPath, 'utf8');
+  const deskPath = path.join(DST, 'research-desk.html');
+  const indexHtml = readFileSync(indexPath, 'utf8');
+  const deskHtml = readFileSync(deskPath, 'utf8');
   const hash = createHash('sha1');
   for (const entry of readdirSync(path.join(DST, 'assets'))) {
     if (/^index-.*\.(js|css)$/.test(entry)) {
       hash.update(readFileSync(path.join(DST, 'assets', entry)));
     }
   }
-  const stamp = hash.digest('hex').slice(0, 8);
-  const before = html;
-  html = html.replace(/(src|href)="(\/(?:boot\.js|assets\/[^"]+))"/g, (_m, attr, url) => {
-    const sep = url.includes('?') ? '&' : '?';
-    return `${attr}="${url}${sep}v=${stamp}"`;
-  });
-  if (html !== before) {
-    writeFileSync(indexPath, html);
-    console.log(`web-ui: cache-bust stamp v=${stamp} applied to index.html asset URLs`);
+  for (const asset of ['research-launcher.js', 'research-desk.css', 'research-desk.js', 'assets/ariadne-appearance.css']) {
+    hash.update(readFileSync(path.join(DST, asset)));
   }
+  // The mark, the favicon, the boot probe and every self-hosted font face are
+  // part of the shipped appearance; a change to any of them must produce a new
+  // ?v= stamp so a cached page cannot keep the old brand.
+  hash.update(readFileSync(path.join(DST, 'ariadne-logo.svg')));
+  if (existsSync(path.join(DST, 'favicon.ico'))) {
+    hash.update(readFileSync(path.join(DST, 'favicon.ico')));
+  }
+  hash.update(readFileSync(path.join(DST, 'boot.js')));
+  const fontRoot = path.join(DST, 'assets', FONT_ASSET_DIR);
+  if (existsSync(fontRoot)) {
+    for (const entry of readdirSync(fontRoot, { withFileTypes: true, recursive: true })) {
+      if (entry.isFile()) hash.update(readFileSync(path.join(entry.parentPath, entry.name)));
+    }
+  }
+  const stamp = hash.digest('hex').slice(0, 8);
+  const withVersion = (html) => html.replace(/(src|href)="(\/(?:boot\.js|assets\/[^"]+|research-(?:launcher\.js|desk\.(?:js|css))))"/g,
+    (_match, attr, url) => `${attr}="${url}${url.includes('?') ? '&' : '?'}v=${stamp}"`);
+  writeFileSync(indexPath, withVersion(indexHtml.replace('</body>', '  <script defer src="/research-launcher.js"></script>\n  </body>')));
+  writeFileSync(deskPath, withVersion(deskHtml));
+  console.log(`web-ui: cache-bust stamp v=${stamp} applied to chat and workspace asset URLs`);
 }
 
+assertReplacementCoverage();
 assertBrandContract();
 
 console.log(`web-ui: copied ${SRC} -> ${DST}`);
@@ -459,7 +486,10 @@ function assertBrandContract() {
   if (!indexHtml.includes('<title>AriadneBuddy</title>')) {
     throw new Error('Branding contract failed: product title was not applied');
   }
-  for (const expectedThemeColor of ['#f4f2f0', '#161d27']) {
+  if (!indexHtml.includes('src="/research-launcher.js?v=')) {
+    throw new Error('Branding contract failed: session integration was not installed');
+  }
+  for (const expectedThemeColor of [lightPaper, darkPaper]) {
     if (!indexHtml.includes(`content="${expectedThemeColor}"`)) {
       throw new Error(
         `Branding contract failed: theme color ${expectedThemeColor} was not applied`,
@@ -469,19 +499,14 @@ function assertBrandContract() {
   if (themedStylesheets < 1) {
     throw new Error('Branding contract failed: Ariadne theme was not appended');
   }
-  const stylesheets = readdirSync(path.join(DST, 'assets'))
-    .filter((entry) => entry.endsWith('.css'))
-    .map((entry) => readFileSync(path.join(DST, 'assets', entry), 'utf8'))
-    .join('\n');
   for (const token of [
-    '--tb-paper: #f4f2f0',
-    '--tb-teal: #526e8a',
-    '--tb-sidebar: #ece7e0',
-    '--tb-paper: #161d27',
-    '--tb-sidebar: #1a2331',
+    '--tb-sidebar: light-dark(',
+    '--workspace-panel-radius:',
+    '.workspace-frieze',
+    '--color-bg: var(--tb-paper)',
   ]) {
-    if (!stylesheets.includes(token)) {
-      throw new Error(`Branding contract failed: bright palette token ${token} is missing`);
+    if (!appearanceCss.includes(token)) {
+      throw new Error(`Branding contract failed: shared palette token ${token} is missing`);
     }
   }
   for (const [anchor, count] of svgReplacementCounts) {
@@ -491,11 +516,9 @@ function assertBrandContract() {
       );
     }
   }
-  if (markDataUri !== undefined) {
-    const copiedMark = path.join(DST, 'ariadne-logo.png');
-    if (!existsSync(copiedMark) || sha256(copiedMark) !== sha256(MARK)) {
-      throw new Error('Branding contract failed: copied logo differs from the canonical mark');
-    }
+  const copiedMark = path.join(DST, 'ariadne-logo.svg');
+  if (!existsSync(copiedMark) || sha256(copiedMark) !== sha256(MARK)) {
+    throw new Error('Branding contract failed: copied logo differs from the canonical mark');
   }
   const expectedVersion = `const Ae="${PRODUCT_VERSION}".trim()?"${PRODUCT_VERSION}":""`;
   const javascript = readdirSync(path.join(DST, 'assets'))
@@ -509,7 +532,7 @@ function assertBrandContract() {
     !javascript.includes(
       'function vZe(){const e=kM(Ese);return e&&Mse.includes(e)?e:"light"}',
     ) ||
-    !javascript.includes('const Cw={light:"#f4f2f0",dark:"#161d27"}')
+    !javascript.includes(nativeColors)
   ) {
     throw new Error('Branding contract failed: bright default color scheme was not applied');
   }

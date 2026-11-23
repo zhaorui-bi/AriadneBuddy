@@ -35,7 +35,7 @@
     "sbom": "node scripts/generate-sbom.mjs",
     "checksums": "node scripts/generate-checksums.mjs",
     "check:licenses": "node scripts/generate-third-party-notices.mjs --check && node scripts/generate-sbom.mjs --check",
-    "check:repo": "node scripts/check-repository.mjs",
+    "check:repo": "node scripts/check-repository.mjs && node engine/apps/ariadne-buddy/scripts/check-theme-contract.mjs && node engine/apps/ariadne-buddy/scripts/check-desk-contract.mjs && node engine/apps/ariadne-buddy/scripts/check-brand-leftovers.mjs",
     "typecheck": "pnpm -C engine --filter ariadne-buddy typecheck",
     "test": "pnpm -C engine --filter ariadne-buddy test:coverage",
     "test:adapter": "node scripts/check-adapter.mjs",
@@ -46,7 +46,7 @@
     "smoke:research": "node engine/apps/ariadne-buddy/scripts/smoke-research.mjs",
     "smoke:web": "node engine/apps/ariadne-buddy/scripts/smoke-web.mjs",
     "smoke:desktop": "node scripts/smoke-desktop.mjs",
-    "check": "node --check main.js && node --check scripts/check-packaging.mjs && node --check scripts/patch-packaging-dependencies.mjs && node --check scripts/audit-runtime.mjs && node --check scripts/check-adapter.mjs && node --check scripts/check-repository.mjs && node --check scripts/check-tui.mjs && node --check scripts/generate-checksums.mjs && node --check scripts/generate-sbom.mjs && node --check scripts/generate-third-party-notices.mjs && node --check scripts/smoke-desktop.mjs && node --check engine/apps/ariadne-buddy/scripts/smoke-web.mjs && node --check engine/apps/ariadne-buddy/scripts/smoke-research.mjs && npm run lint && npm run typecheck && npm test && npm run test:adapter && npm run test:desktop-startup && npm run test:packaging && npm run check:tui && npm run smoke:mcp && npm run smoke:research && npm run smoke:web && npm run check:licenses && npm run check:repo",
+    "check": "node --check main.js && node --check scripts/check-packaging.mjs && node --check scripts/patch-packaging-dependencies.mjs && node --check scripts/audit-runtime.mjs && node --check scripts/check-adapter.mjs && node --check scripts/check-repository.mjs && node --check scripts/check-tui.mjs && node --check scripts/generate-checksums.mjs && node --check scripts/generate-sbom.mjs && node --check scripts/generate-third-party-notices.mjs && node --check scripts/smoke-desktop.mjs && node --check engine/apps/ariadne-buddy/scripts/smoke-web.mjs && node --check engine/apps/ariadne-buddy/scripts/smoke-research.mjs && node --check engine/apps/ariadne-buddy/scripts/smoke-mcp.mjs && node --check engine/apps/ariadne-buddy/scripts/check-theme-contract.mjs && node --check engine/apps/ariadne-buddy/scripts/check-desk-contract.mjs && node --check engine/apps/ariadne-buddy/scripts/check-brand-leftovers.mjs && npm run lint && npm run typecheck && npm test && npm run test:adapter && npm run test:desktop-startup && npm run test:packaging && npm run check:tui && npm run smoke:mcp && npm run smoke:research && npm run smoke:web && npm run check:licenses && npm run check:repo",
     "release:check": "npm run check && npm audit --audit-level=low && npm run audit:runtime",
     "clean:dist": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "prepack": "npm run clean:dist && npm run build:engine",
@@ -73,6 +73,7 @@
     ],
     "files": [
       "main.js",
+      "preload.js",
       "LICENSE"
     ],
     "extraResources": [
@@ -98,8 +99,12 @@
         "to": "web-ui"
       },
       {
-        "from": "build/logo-256.png",
-        "to": "brand/logo.png"
+        "from": "build/logo.svg",
+        "to": "brand/logo.svg"
+      },
+      {
+        "from": "engine/apps/ariadne-buddy/theme/appearance.css",
+        "to": "brand/appearance.css"
       },
       {
         "from": "LICENSE",

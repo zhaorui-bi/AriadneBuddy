@@ -37,7 +37,11 @@ application.
 | `src/ariadne/provenance.ts` | Engineering run manifests with content fingerprints. |
 | `src/ariadne/jobs.ts` | Durable job store and detached runner. |
 | `backend/ariadne_cli.py` | Stable JSON adapter over the ariadne-tps engines. |
-| `theme/ariadne.css` | Ancient Greek/Roman visual system (parchment × aegean, meander fret). |
+| `theme/appearance.css` | Shared appearance layer: the parchment and ink scale, the four pigments, and the motif primitives (stele, meander, medallion, amphora, cartouche, fluted columns) every branded surface draws from. |
+| `theme/ariadne.css` | Conversation, project rail, and settings styling over that shared layer. |
+| `theme/research-desk.html` | The Research Desk document. |
+| `theme/research-desk.css` | Research Desk styling: notice tones, sticky and print-ready tables, accessibility guards. |
+| `theme/research-desk.js` | Research Desk rendering, illustrated empty states, and the keyboard contract. |
 | `skills/` | `ariadne` and `ariadne-campaign` agent skills. |
 | `scripts/sync-web-ui.mjs` | Web-UI branding pipeline with a hard brand contract. |
 

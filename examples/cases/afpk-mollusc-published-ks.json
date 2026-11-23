@@ -1,0 +1,10 @@
+{
+  "doi": "10.1038/s41467-023-44497-0",
+  "figure": "Fig. 2A",
+  "scores": {
+    "EcPKS1_E._chlorotica__extraction": { "fas_i": 587.7, "fas_ii": 123.1, "pks": 274.6 },
+    "EcPKS2_E._chlorotica__extraction": { "fas_i": 581.7, "fas_ii": 133.5, "pks": 285.2 },
+    "XP_041363356.1:1-468": { "fas_i": 775.6, "fas_ii": 151.1, "pks": 338.4 },
+    "XP_041375027.1:1-432": { "fas_i": 447.5, "fas_ii": 127.8, "pks": 267.0 }
+  }
+}

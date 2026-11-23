@@ -36,3 +36,6 @@ engine/apps/*/web-ui/
 .mimosa/
 .video_agent/
 .zcode/
+
+# Local agent-tool session state (never part of the product).
+.stepcode/

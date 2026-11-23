@@ -24,7 +24,8 @@ AriadneBuddy combines four layers:
 
 ```
 engine/apps/ariadne-buddy/
-├── src/cli.ts               command dispatch (run/chat/web/doctor/onboard/tools/research/info)
+├── src/cli.ts               command dispatch (default TUI, run/chat/web/doctor/
+│                            onboard/tools/research/info, --version, --help)
 ├── src/harness.ts           Kimi harness assembly + per-turn skill activation
 ├── src/server.ts            web server startup + expert-agent reply-style guide
 ├── src/ariadne/backend.ts   backend discovery (ARIADNE_REPO/.venv) + bounded subprocess exec
@@ -33,10 +34,22 @@ engine/apps/ariadne-buddy/
 ├── src/ariadne/jobs.ts      durable job store + detached runner
 ├── src/ariadne/provenance.ts engineering run manifests (sha256 fingerprints)
 ├── backend/ariadne_cli.py   the deterministic science boundary
-├── theme/ariadne.css        parchment × aegean visual system (+ meander fret)
+├── theme/appearance.css     shared token + motif layer: parchment × aegean palette,
+│                            the four pigments, and the meander fret and fluted
+│                            columns every branded surface draws from
+├── theme/ariadne.css        conversation, project rail, and settings styling over
+│                            that shared layer
+├── theme/research-desk.html the Research Desk document
+├── theme/research-desk.css  Research Desk styling: notice tones, sticky tables, print
+├── theme/research-desk.js   Research Desk rendering, empty states, keyboard contract
 ├── skills/ariadne*.md       expert-role operating contracts
 └── scripts/sync-web-ui.mjs  web-UI branding pipeline with a hard brand contract
 ```
+
+The meander fret and the fluted columns live in `theme/appearance.css`, not in
+`theme/ariadne.css`: `appearance.css` declares the tokens and the motif primitives, and
+`ariadne.css` consumes them. The desktop splash and the About panel inline the same
+tokens from `appearance.css`. See [Design](./DESIGN.md) for the token reference.
 
 ## The closed scientific loop
 
@@ -63,8 +76,9 @@ readiness → literature → hypothesis ──approve──→ pathway
 - The adapter speaks exactly one JSON document on stdout per invocation;
   progress goes to stderr; failures are `{"ok": false, ...}` + non-zero exit.
 - The MCP server exposes `ariadne_*` tools over stdio, registered
-  non-persistently per session and wired through `~/.ariadne/mcp.json` for the
-  web/desktop hosts.
+  non-persistently for the CLI prompt command. The Web and desktop hosts load
+  `mcp.json` from their active Ariadne data directory. Startup updates the built-in
+  `ariadne` entry and preserves other configured MCP servers for Chat.
 - Job runners are detached processes; jobs survive session exit and carry
   `run-manifest.json` fingerprints (request, inputs, scientific configuration,
   configured-output sha256) that the research controller re-verifies before
