@@ -103,8 +103,7 @@ ceiling: `--color-accent-soft` / `--color-accent-bd`, `--color-success-soft` /
 11–13% of the pigment; the borders are 29–32%.
 
 The classical layer also exposes `--color-aegean`, `--color-aegean-deep`,
-`--color-terracotta`, and `--color-olive` for surfaces that must name the pigment itself,
-and `--color-rule-frieze-accent` for the one place the frieze is allowed a stronger wash.
+`--color-terracotta`, and `--color-olive` for surfaces that must name the pigment itself.
 
 ## Geometry and mouldings
 
@@ -116,7 +115,6 @@ and `--color-rule-frieze-accent` for the one place the frieze is allowed a stron
 | `--shadow-medallion` | inset ring + inset top highlight | a struck medallion |
 | `--rule-hairline` | `1px solid var(--color-line)` | the engraved hairline |
 | `--rule-egg-and-dart` | three layered gradients, 9px period | the egg-and-dart band |
-| `--rule-dentil` | two layered gradients, 9px period | the dentil band |
 | `--workspace-rule` | `3px double var(--color-line-strong)` | the double rule |
 | `--workspace-frieze-ink` | `color-mix(in srgb, var(--color-accent) 62%, transparent)` | the ink of the frieze and the meander |
 
@@ -191,7 +189,7 @@ Each primitive is declared in `appearance.css` with the comment that states its 
 | `.cartouche`, `.cartouche__mark` | reserved for the framed product name plate | `theme/appearance.css` |
 | `.progress-amphora` | reserved for progress that must read as a vessel | `theme/appearance.css` |
 | `.rail-divider--column` | reserved for a rail divider | `theme/appearance.css` |
-| `.rule-double`, `--rule-dentil` | reserved for section rules and dentil bands | `theme/appearance.css` |
+| `.rule-double` | reserved for section rules | `theme/appearance.css` |
 
 The reserved primitives ship in the packaged `brand/appearance.css` and are available to
 every branded surface; they are declared in the shared layer rather than re-derived per

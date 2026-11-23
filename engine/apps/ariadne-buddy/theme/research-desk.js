@@ -529,6 +529,7 @@ async function reload() {
   refreshing = true;
   updateControls();
   get('task').setAttribute('aria-busy', 'true');
+  get('tab-panel').classList.add('is-loading');
   if (!task) showState('', copy.loadingTask, { figure: true });
   try {
     showTask(await request('/' + encodeURIComponent(selected)));
@@ -538,6 +539,7 @@ async function reload() {
   } finally {
     refreshing = false;
     get('task').removeAttribute('aria-busy');
+    get('tab-panel').classList.remove('is-loading');
     updateControls();
   }
 }
@@ -1742,11 +1744,14 @@ async function loadArtifact(taskId, artifactId, preview, { overview = false, det
   const status = element('p', 'subtle', copy.loadingArtifact);
   status.setAttribute('role', 'status');
   preview.setAttribute('aria-busy', 'true');
+  const skeleton = preview.closest('.section') ?? preview;
+  skeleton.classList.add('is-loading');
   preview.replaceChildren(status);
   try {
     const { artifact, content } = await request(`/${encodeURIComponent(taskId)}/artifacts/${encodeURIComponent(artifactId)}`, { signal: controller.signal });
     if (controller.signal.aborted) return;
     preview.removeAttribute('aria-busy');
+    skeleton.classList.remove('is-loading');
     const typedReport = isAfpkReport(content) ? showAfpkReport(content, { overview, details }) : undefined;
     if (overview) {
       if (typedReport) preview.replaceChildren(typedReport);
@@ -1776,6 +1781,7 @@ async function loadArtifact(taskId, artifactId, preview, { overview = false, det
     preview.append(download);
   } catch (error) {
     preview.removeAttribute('aria-busy');
+    skeleton.classList.remove('is-loading');
     if (!controller.signal.aborted) status.textContent = error.message;
   }
 }

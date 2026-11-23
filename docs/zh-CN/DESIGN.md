@@ -98,8 +98,7 @@ AriadneBuddy 的界面由一层共用外观构建，来源是
 `--color-olive-soft` / `--color-olive-bd`。淡色为颜料的 11–13%，边线为 29–32%。
 
 古典层同时暴露 `--color-aegean`、`--color-aegean-deep`、`--color-terracotta` 与
-`--color-olive`，供必须指名颜料本身的表面使用；`--color-rule-frieze-accent` 是回纹带
-唯一被允许使用更浓淡色的地方。
+`--color-olive`，供必须指名颜料本身的表面使用。
 
 ## 几何与线脚
 
@@ -111,7 +110,6 @@ AriadneBuddy 的界面由一层共用外观构建，来源是
 | `--shadow-medallion` | 内描边 + 顶部内高光 | 敲出的圆牌 |
 | `--rule-hairline` | `1px solid var(--color-line)` | 刻出的细线 |
 | `--rule-egg-and-dart` | 三层渐变，9px 周期 | 蛋矢饰带 |
-| `--rule-dentil` | 两层渐变，9px 周期 | 齿饰带 |
 | `--workspace-rule` | `3px double var(--color-line-strong)` | 双线 |
 | `--workspace-frieze-ink` | `color-mix(in srgb, var(--color-accent) 62%, transparent)` | 回纹带与回纹分隔线的墨色 |
 
@@ -184,7 +182,7 @@ Cormorant Garamond Variable 与 Noto Serif SC Variable 随产品发布，由
 | `.cartouche`、`.cartouche__mark` | 预留给带框的产品名牌 | `theme/appearance.css` |
 | `.progress-amphora` | 预留给必须读作容器的进度显示 | `theme/appearance.css` |
 | `.rail-divider--column` | 预留给侧栏分隔 | `theme/appearance.css` |
-| `.rule-double`、`--rule-dentil` | 预留给分节线与齿饰带 | `theme/appearance.css` |
+| `.rule-double` | 预留给分节线 | `theme/appearance.css` |
 
 预留图元随打包的 `brand/appearance.css` 一同发布，可供全部品牌化表面使用；它们声明在
 共用层，而不是每个界面各自重画一遍。

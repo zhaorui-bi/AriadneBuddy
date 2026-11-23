@@ -9,11 +9,7 @@
   --font-display: "Cormorant Garamond Variable", "Noto Serif SC Variable", "Songti SC", STSong, "Source Han Serif SC", Georgia, serif;
   --font-editorial: "Noto Serif SC Variable", "Songti SC", STSong, "Source Han Serif SC", Georgia, serif;
   --sans: var(--font-ui);
-  --font-sans: var(--font-ui);
-
-  --workspace-rail-width: 16.875rem;
   --workspace-toolbar-height: 3rem;
-  --workspace-content-width: 70rem;
   --workspace-radius: 0.375rem;
   --workspace-panel-radius: 0.625rem;
   --workspace-button-height: 2.375rem;
@@ -68,11 +64,6 @@
   mask: url("/ariadne-logo.svg") center / contain no-repeat;
 }
 
-.workspace-control {
-  min-height: var(--workspace-button-height);
-  padding-inline: 0.78rem;
-  border-radius: var(--workspace-radius);
-}
 
 .workspace-column {
   --column-width: 1.5rem;
@@ -127,19 +118,14 @@ html[data-color-scheme="system"] {
   --bg: var(--tb-paper);
   --panel: var(--tb-paper-soft);
   --panel2: color-mix(in srgb, var(--tb-ink) 6%, transparent);
-  --canvas: var(--tb-paper-raised);
   --logo: var(--tb-blue);
   --blue: var(--tb-blue);
-  --blue2: var(--tb-blue-hover);
-  --soft: color-mix(in srgb, var(--tb-blue) 11%, transparent);
-  --bd: color-mix(in srgb, var(--tb-blue) 31%, transparent);
 
   --color-bg: var(--tb-paper);
   --color-surface: var(--tb-paper-soft);
   --color-surface-raised: var(--tb-paper-raised);
   --color-surface-overlay: var(--tb-surface-glass);
   --color-surface-sunken: var(--tb-paper-deep);
-  --color-surface-deep: var(--tb-paper-deep);
   --color-well: var(--tb-paper-soft);
   --color-inline-code-bg: color-mix(in srgb, var(--tb-blue) 8%, transparent);
   --color-text: color-mix(in srgb, var(--tb-ink) 96%, transparent);
@@ -161,7 +147,6 @@ html[data-color-scheme="system"] {
   --color-accent-hover: var(--tb-blue-hover);
   --color-accent-soft: color-mix(in srgb, var(--tb-blue) 11%, transparent);
   --color-accent-bd: color-mix(in srgb, var(--tb-blue) 32%, transparent);
-  --color-info: var(--tb-blue);
   --color-success: var(--tb-success);
   --color-success-soft: color-mix(in srgb, var(--tb-success) 13%, transparent);
   --color-success-bd: color-mix(in srgb, var(--tb-success) 30%, transparent);
@@ -200,7 +185,6 @@ html[data-color-scheme="system"] {
   --markdown-quote-rule-color: var(--tb-cyan);
   --markdown-code-background: var(--tb-paper-raised);
   --markdown-code-header-background: color-mix(in srgb, var(--tb-paper-soft) 92%, transparent);
-  --markdown-code-action-background: color-mix(in srgb, var(--tb-paper-raised) 92%, transparent);
   --markdown-image-background: var(--tb-paper-soft);
 
   --p-hairline: 1px;
@@ -245,7 +229,6 @@ html[data-color-scheme="system"] {
 
 :root {
   --color-rule-frieze: var(--workspace-frieze-ink);
-  --color-rule-frieze-accent: color-mix(in srgb, var(--tb-aegean) 55%, transparent);
   --color-marble: var(--tb-marble);
   --color-marble-vein: var(--tb-marble-vein);
   --marble-highlight: linear-gradient(
@@ -254,7 +237,6 @@ html[data-color-scheme="system"] {
     var(--tb-marble) 42%,
     color-mix(in srgb, var(--tb-marble) 92%, var(--tb-paper-deep)) 100%
   );
-  --color-ink-stone: color-mix(in srgb, var(--tb-ink) 78%, var(--tb-paper));
   --color-aegean: var(--tb-aegean);
   --color-aegean-deep: var(--tb-aegean-deep);
   --color-terracotta: var(--tb-terracotta);
@@ -281,27 +263,8 @@ html[data-color-scheme="system"] {
     linear-gradient(90deg, var(--color-rule-frieze) 0 3px, transparent 3px) 0 0 / 9px 3px repeat-x,
     radial-gradient(circle at 4.5px 5px, var(--color-rule-frieze) 0 1.3px, transparent 1.4px) 0 3px / 9px 7px repeat-x,
     linear-gradient(90deg, var(--color-rule-frieze) 0 1px, transparent 1px) 0 9px / 9px 1px repeat-x;
-  --rule-dentil:
-    linear-gradient(90deg, var(--color-rule-frieze) 0 4px, transparent 4px) 0 0 / 9px 4px repeat-x,
-    linear-gradient(90deg, var(--color-rule-frieze) 0 9px, transparent 9px) 0 4px / 9px 1px repeat-x;
 }
 
-/* Latent upstream tokens the brand patch never reaches. Pin them to the
-   ink and pigment scale so no unpigmented blue can surface from the bundle. */
-:root {
-  --star: var(--tb-ink-muted);
-  --bluebg: color-mix(in srgb, var(--tb-aegean) 11%, transparent);
-  --blueln: color-mix(in srgb, var(--tb-aegean) 32%, transparent);
-  --color-attention: var(--tb-terracotta);
-  --color-term-black: var(--tb-ink);
-  --color-term-red: var(--tb-danger);
-  --color-term-green: var(--tb-olive);
-  --color-term-yellow: var(--tb-terracotta);
-  --color-term-blue: var(--tb-aegean);
-  --color-term-magenta: var(--tb-aegean-deep);
-  --color-term-cyan: var(--tb-olive);
-  --color-term-white: var(--tb-ink-strong);
-}
 
 /* --- Motif primitives ---------------------------------------------- */
 
