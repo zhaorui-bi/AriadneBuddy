@@ -379,7 +379,6 @@ body, .app, .wizard {
 .chat .think,
 .chat .tool-line,
 .chat .activity-run,
-.chat .agent-card,
 .chat .turn-files {
   border-color: var(--color-line);
 }
@@ -408,7 +407,7 @@ body, .app, .wizard {
   letter-spacing: .06em;
 }
 
-.msg-time, .srow .time, .usage-value, .token-count {
+.msg-time, .srow .time {
   font-variant-numeric: tabular-nums;
 }
 
@@ -483,8 +482,6 @@ body, .app, .wizard {
   background: var(--color-surface);
 }
 
-.settings-tabs .settings-tab.is-active,
-.settings-tabs .settings-tab[aria-selected="true"],
 .settings-tabs .tab.on {
   color: var(--color-accent);
   background: var(--color-accent-soft);
