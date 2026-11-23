@@ -274,9 +274,9 @@ describe('research CLI command boundary', () => {
 
 describe('runtime paths and private persistence', () => {
   it('expands user paths without inheriting the upstream Kimi home', () => {
-    expect(resolveUserPath('~/aqua-work')).toBe(path.join(homedir(), 'aqua-work'));
-    expect(resolveAriadneHome({ ARIADNE_HOME: '~/aqua-home' })).toBe(
-      path.join(homedir(), 'aqua-home'),
+    expect(resolveUserPath('~/ceess-work')).toBe(path.join(homedir(), 'ceess-work'));
+    expect(resolveAriadneHome({ ARIADNE_HOME: '~/ceess-home' })).toBe(
+      path.join(homedir(), 'ceess-home'),
     );
     expect(resolveAriadneHome({ KIMI_CODE_HOME: '/tmp/upstream-home' })).toBe(
       path.join(homedir(), '.ariadne'),
@@ -284,12 +284,12 @@ describe('runtime paths and private persistence', () => {
   });
 
   it('launches the upstream engine under the isolated Ariadne TUI identity', () => {
-    expect(ariadneTuiEnvironment('/tmp/aqua-home', { PATH: '/usr/bin' })).toMatchObject({
+    expect(ariadneTuiEnvironment('/tmp/ceess-home', { PATH: '/usr/bin' })).toMatchObject({
       PATH: '/usr/bin',
-      KIMI_CODE_HOME: '/tmp/aqua-home',
+      KIMI_CODE_HOME: '/tmp/ceess-home',
       KIMI_CODE_NO_AUTO_UPDATE: '1',
       KIMI_DISABLE_TELEMETRY: '1',
-      ARIADNE_HOME: '/tmp/aqua-home',
+      ARIADNE_HOME: '/tmp/ceess-home',
       ARIADNE_TUI: '1',
       ARIADNE_VERSION: harnessVersion,
     });
@@ -415,10 +415,10 @@ describe('scientific chat turns', () => {
       cancel: vi.fn(),
     } as unknown as Session;
     try {
-      const pending = promptTurnToEnd(session, 'Assess arsenic-bearing groundwater.');
+      const pending = promptTurnToEnd(session, 'Nominate cembrene-class TPS candidates.');
       await Promise.resolve();
       expect(promptWithSkills).toHaveBeenCalledWith(
-        'Assess arsenic-bearing groundwater.',
+        'Nominate cembrene-class TPS candidates.',
         [{ name: 'ariadne' }],
       );
       expect(unsubscribe).not.toHaveBeenCalled();

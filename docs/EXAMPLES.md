@@ -18,6 +18,12 @@ and each block says which it is:
 | Nomination evidence row | `_merged_candidate_rows` in `engine/apps/ariadne-buddy/backend/ariadne_cli.py` |
 | Audit issue row | `command_audit_nomination` in the same file |
 | Published KS scores | `examples/cases/afpk-mollusc-published-ks.json` (verbatim) |
+| `research create` input | the `research --help` examples in `engine/apps/ariadne-buddy/src/cli.ts` (verbatim) |
+| `research respond` input, stage deposit | the `research --help` examples in the same file (verbatim) |
+| `research respond` input, gate decision | the `ariadne_research_respond` schema in `engine/apps/ariadne-buddy/src/ariadne/research-tools.ts` |
+| `research cancel` input | the `research --help` examples in `engine/apps/ariadne-buddy/src/cli.ts` (verbatim) |
+| `research list` entry | the `ariadne_research_list` mapping in `engine/apps/ariadne-buddy/src/ariadne/research-tools.ts` |
+| `run --json` envelope | `TurnEnvelope` in `engine/apps/ariadne-buddy/src/harness.ts` |
 
 The runnable cases live in [`examples/cases/`](../examples/cases/): a standard CeeSs
 screen, a relaxed exploratory screen, a pathway-first TPS inventory, and the molluscan KS
@@ -179,6 +185,161 @@ A putative AFPK nomination requires a unique FAS I lead inside the requested bit
 band. Approving the shortlist records acceptance for computational handoff with
 `conditional_nomination`; taxonomic QC, domain architecture, and phylogenetic support
 remain downstream evidence for the researcher to assess.
+
+## Model-free CLI path
+
+The `research` subcommand controls a durable task without a conversational model. Every
+action reads or writes JSON validated against the matching MCP tool schema, so the CLI
+and the agent tools cannot drift apart. Run from the directory that owns the task — the
+default `ARIADNE_WORKDIR` — or pass `--home DIR` to point at another Ariadne home.
+
+```bash
+./bin/ariadnebuddy research create  --input request.json
+./bin/ariadnebuddy research status  --id research_0123456789abcdef01234567
+./bin/ariadnebuddy research list
+./bin/ariadnebuddy research advance --id research_0123456789abcdef01234567
+./bin/ariadnebuddy research respond --input respond.json
+./bin/ariadnebuddy research cancel  --input cancel.json
+```
+
+Every command also takes `--help`; `ariadnebuddy research --help` prints the flag table
+and one example per action. Exit codes are the CLI's: `0` completed, `1` arguments
+rejected / a required check failed / setup incomplete, `130` interrupted with Ctrl+C.
+
+`--input` files resolve relative to `ARIADNE_WORKDIR`, must be regular files (no
+symbolic links) of at most 64 KiB, and must contain a JSON object. Creation starts no
+backend work: it freezes the request and the objective into a task.
+
+### Create
+
+Verbatim from the `research --help` examples in
+`engine/apps/ariadne-buddy/src/cli.ts`:
+
+```json
+{"requestId":"case-1","objective":"Nominate cembrene-class TPS","requestFile":"nomination-request.json","maxJobs":4}
+```
+
+`requestFile` is the snake_case nomination request frozen by the task — the block at the
+top of this page. `maxJobs` is the total backend-job budget including retries (default
+6, maximum 16); `topK` is the nearest-reference top-k for structure retrieval (default
+5). A task id looks like `research_` plus 24 lowercase hex characters.
+
+### Advance
+
+`advance` reconciles the current durable assignment and moves the task one stage when its
+gate allows. Knowledge stages open a stage-input attention; compute stages launch
+deterministic jobs; a job already running is reused rather than relaunched.
+
+```bash
+./bin/ariadnebuddy research advance --id research_0123456789abcdef01234567
+./bin/ariadnebuddy research advance --id research_0123456789abcdef01234567 --expected-version 3
+```
+
+`--expected-version` is optional and refuses the advance when the task has moved on.
+Repeating `advance` until the task rests at `waiting` or `ready` is the normal loop.
+
+### Respond, stage deposit
+
+Verbatim from the `research --help` examples in
+`engine/apps/ariadne-buddy/src/cli.ts`:
+
+```json
+{"taskId":"research_0123456789abcdef01234567","attentionId":"attention-1","expectedVersion":3,"action":"submit_stage","artifactFile":"stage.json","reason":"Literature deposited"}
+```
+
+`attentionId` names the open attention item the response answers — read it from the task
+status. `artifactFile` is a stage-artifact JSON under the snake_case contract for that
+stage, so the literature and hypothesis blocks above are what `submit_stage` points at.
+
+### Respond, gate decision
+
+Shape, from the `ariadne_research_respond` schema in
+`engine/apps/ariadne-buddy/src/ariadne/research-tools.ts`. The `action` values are
+`amend_request`, `submit_stage`, `approve`, `revise`, `iterate`, `conclude`, `retry`,
+and `proceed_without_esm`; which ones are legal depends on the open attention item.
+
+```json
+{"taskId":"research_0123456789abcdef01234567","attentionId":"attention-1","expectedVersion":3,"action":"approve","reason":"Hypotheses are testable and the literature supports them"}
+```
+
+A `revise` answers a gate with a written reason and no artifact; an `amend_request`
+carries `requestFile`; a `proceed_without_esm` answers only the ESM availability gate.
+`expectedVersion` is required: a response recorded against a stale version is refused
+with `409`, and the desk reloads instead of overwriting. Every decision is recorded as
+caller-declared — attributed to the caller, not verified human approval.
+
+### List
+
+Shape, from the `ariadne_research_list` mapping in
+`engine/apps/ariadne-buddy/src/ariadne/research-tools.ts`. The command prints the tool's
+JSON result; `returned` is the number of entries in this bounded response, not a total
+task count.
+
+```json
+{
+  "tasks": [
+    {
+      "id": "research_0123456789abcdef01234567",
+      "workflow": "nomination",
+      "version": 3,
+      "status": "waiting",
+      "stage": "literature",
+      "iteration": 1,
+      "updatedAt": "2026-11-08T00:00:00.000Z",
+      "objective": "Nominate cembrene-class TPS",
+      "objectiveTruncated": false,
+      "nextAction": "Deposit the literature artifact.",
+      "nextActionTruncated": false,
+      "jobsUsed": 0,
+      "maxJobs": 4,
+      "openAttention": [{ "id": "attention-1", "kind": "stage_input", "stage": "literature" }],
+      "scientificOutcome": { "status": "pending" }
+    }
+  ],
+  "returned": 1
+}
+```
+
+Use `research status --id` for the full task, its event history, assignments, and stage
+artifacts.
+
+### Cancel
+
+Verbatim from the `research --help` examples in
+`engine/apps/ariadne-buddy/src/cli.ts`:
+
+```json
+{"taskId":"research_0123456789abcdef01234567","expectedVersion":4,"reason":"Scope changed"}
+```
+
+Cancellation stops any active job and retains the inputs, assignments, artifacts, and
+decisions, including the recorded scientific outcome at handoff. A cancelled task cannot
+resume through `advance`; it is available under archived tasks.
+
+### run --quiet and run --json
+
+`run` is the one-shot agent path. Both flags are script-friendly: `--quiet` puts only
+assistant text on stdout and progress on stderr, and `--json` prints one structured JSON
+envelope on stdout and implies `--quiet`.
+
+```bash
+./bin/ariadnebuddy run --quiet "summarize the coral cembrene literature"
+./bin/ariadnebuddy run --json "nominate cembrene-class TPS candidates"
+```
+
+Shape, from `TurnEnvelope` in `engine/apps/ariadne-buddy/src/harness.ts`:
+
+```json
+{
+  "status": "completed",
+  "text": "…assistant text…",
+  "turns": [{ "turnId": 1, "reason": "…" }]
+}
+```
+
+`status` is `completed` or `failed`; on failure the envelope carries an `error` string
+and the command exits non-zero. `turns` records one entry per completed turn, with the
+end reason the engine reported for it.
 
 ## Related
 

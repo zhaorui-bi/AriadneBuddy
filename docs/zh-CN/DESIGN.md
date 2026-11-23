@@ -14,6 +14,18 @@ AriadneBuddy 的界面由一层共用外观构建，来源是
 产品本身是一份科学调查的记录，因此界面是一块石面：羊皮纸承载工作，墨承载文字，颜色
 只在一个界面必须表态时出现。四种颜料构成全部色板。
 
+## 品牌资产
+
+标记与平台图标以文件形式随产品发布，而非内联 SVG，因此每个界面绘制的都是同一个图
+形。
+
+| 资产 | 它是什么 |
+| --- | --- |
+| [`logo.svg`](../logo.svg) | README 锁定组合：来自 `build/logo.svg` 的女神标记，加上以精确 Cormorant Garamond 字形轮廓排版的文字标记与标语，含浅色与深色两种墨色。由 `scripts/make_readme_logo.py` 生成；799 × 292 viewBox。 |
+| `build/logo.svg` | 规范标记——单条路径——以 `web-ui/ariadne-logo.svg` 发布到 Web UI，并被 `.workspace-mark`、`.cartouche__mark` 与 `.medallion` 遮罩使用。 |
+| `build/icon.png`、`build/icon.ico`、`build/icon.icns` | 平台图标：承载镌刻双细线规则的大理石板，由 `scripts/make_icons.py` 切出。 |
+| [`images/loop.svg`](../images/loop.svg) | 希腊回纹边框内的闭环，各阶段画成凹槽柱，人工门禁画成月桂。 |
+
 ## 界面：羊皮纸与墨的色阶
 
 | 令牌 | 浅色 | 深色 | 用途 |
@@ -172,7 +184,8 @@ Cormorant Garamond Variable 与 Noto Serif SC Variable 随产品发布，由
 | 图元 | 当前实际出现位置 | 来源 |
 | --- | --- | --- |
 | `.workspace-frieze` | 研究记录台任务页头、元信息行下方 | `theme/research-desk.html` |
-| `.workspace-mark` | 研究记录台无脚本卡片；对话侧栏品牌区 | `theme/research-desk.html`、`theme/ariadne.css` |
+| `.workspace-mark` | 研究记录台无脚本卡片与空状态装饰 | `theme/research-desk.html`、`theme/research-desk.js` |
+| `.side .ch-logo` | 对话侧栏 34px 品牌区 | `theme/ariadne.css` |
 | `.workspace-column` + `.medallion` | 插画式空状态装饰 | `theme/research-desk.js`（`emptyState`） |
 | `.workspace-column` | 桌面启动页与「关于」面板的品牌徽记 | `main.js` |
 | `.divider-meander` | 桌面启动页与「关于」面板 | `main.js` |

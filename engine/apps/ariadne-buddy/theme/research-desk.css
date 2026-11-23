@@ -354,11 +354,9 @@ code { font-size: 0.78rem; overflow-wrap: anywhere; }
 .comparison-table .native-finder-cell, .comparison-table .finder-cell { border-inline-start: var(--workspace-rule, 3px double var(--color-line-strong)); }
 .sequence-cell, .finder-cell { max-width: 9.5rem; overflow-wrap: anywhere; }
 .role-cell { white-space: nowrap; }
-.report-table .score-cell { text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .row-reason { display: block; color: var(--muted); margin-top: 0.13rem; overflow-wrap: anywhere; }
 .comparison-table .native-finder-cell { min-width: 10rem; }
 .comparison-table .finder-cell { min-width: 9rem; }
-.comparison-table .native-finder-cell, .comparison-table .finder-cell { border-inline-start: 1px solid var(--color-line-strong); }
 .finder-settings, .finder-memberships ul, .finder-run-list { padding: 0; list-style: none; }
 .finder-settings > li, .finder-run-list > li { display: flex; flex-wrap: wrap; gap: 0.2rem 0.45rem; align-items: baseline; }
 .finder-settings > li + li { margin-top: 0.3rem; padding-top: 0.3rem; border-top: 1px solid var(--line); }

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./docs/logo.svg" alt="Ariadne — 官方完整版徽标，女神线稿与字标" width="440">
+  <img src="./docs/logo.svg" alt="Ariadne — 官方完整版徽标，女神线稿与字标" width="560">
 </p>
 
 <p align="center">
@@ -63,8 +63,8 @@
 动物天然产物发现的前两阶段分别解决了棘皮动物酶的可审计挖掘，以及软体动物研究中
 通过 AFPK-finder 区分 FAS、PKS 与 AFPK 的批量筛查。AriadneBuddy 的第三阶段把
 计算、证据审核和实验反馈组织成可追溯的研究流程。在 TPS/CeeSs 闭环之外，工作台
-也支持软体动物 KS 三模型筛查、原版 AFPK-finder 调用、论文证据对照和候选名单审核。将发现周期
-从月缩短到周是后续研究目标。 [软体动物案例](./examples/cases/AFPK_MOLLUSC.md)
+也支持软体动物 KS 三模型筛查、原版 AFPK-finder 调用、论文证据对照和候选名单审核，详见
+[软体动物案例](./examples/cases/AFPK_MOLLUSC.md)。
 
 ## <img src="./docs/images/icons/ring.svg" width="22" height="22" alt="" align="top"> 科学闭环
 
@@ -141,9 +141,11 @@ HMM + 特征空间证据承载，结果为 `conditional_nomination`。
 
 ## <img src="./docs/images/icons/install.svg" width="22" height="22" alt="" align="top"> 安装
 
-**前置条件** —— Node.js ≥ 24.15、npm、pnpm 12；Python 3.10+ 与
+**前置条件** —— Node.js ≥ 24.15、npm（`packageManager` 声明 npm@12.0.2）、pnpm 12
+（devDependency）；Python 3.10+ 与
 [ariadne-tps](https://github.com/zhaorui-bi/Ariadne) 检出（`pyhmmer、
-pyrodigal、scikit-learn、openpyxl`，检出内 `.venv` 自动探测）；可选
+pyrodigal、scikit-learn、openpyxl`；解释器先取 `ARIADNE_PYTHON`，再取检出内
+`.venv` 或 `venv`，最后取 `PATH` 上的 `python3`/`python`）；可选
 `pip install ariadne-tps[esm]` 启用 ESM2 打分；任意 OpenAI 兼容模型 API Key
 （无需登录流程）。
 
@@ -152,17 +154,27 @@ git clone https://github.com/zhaorui-bi/AriadneBuddy && cd AriadneBuddy
 npm run setup                                          # 安装 + 构建 + 品牌化 Web UI
 ./bin/ariadnebuddy onboard --ariadne-repo /path/to/Ariadne \
                            --provider zai --api-key-env ZAI_API_KEY
-./bin/ariadnebuddy doctor --probe                      # 一键健康检查
+./bin/ariadnebuddy doctor --probe --probe-model        # 一键健康检查
 ```
+
+引导分六个编号步骤，且不会静默收场：若最终没有配置默认模型，它会打印确切的修正命令
+`ariadnebuddy onboard --provider <id> --api-key-env <VAR>` 并以非零码退出。
+`./bin/ariadnebuddy config show` 可直接打印生效的提供方、模型、后端、技能目录与
+MCP 注册情况，无需运行完整 doctor。
 
 ## <img src="./docs/images/icons/flask.svg" width="22" height="22" alt="" align="top"> 使用
 
 ```bash
 ./bin/ariadnebuddy web        # 古希腊风格 Web 工作台 → http://127.0.0.1:58627
-./bin/ariadnebuddy            # 完整终端 TUI
+./bin/ariadnebuddy            # 完整终端 TUI（等同 `ariadnebuddy tui`）
 ./bin/ariadnebuddy chat       # 轻量 REPL
+./bin/ariadnebuddy run "<prompt>"   # 一次性：建会话、发一句、流式输出、退出
 npm start                     # Electron 桌面应用
 ```
+
+`run` 面向脚本：`--quiet` 让 stdout 只保留助手文本、进度走 stderr，`--json` 输出单个
+结构化信封；`--model`、`--workdir`、`--permission auto|manual|yolo` 可覆盖配置默认值。
+全局 `--no-telemetry` 可为 `run`、`chat`、`web` 关闭遥测。
 
 然后直接下令——*“用 Ariadne 引擎对 input/all_tps.fasta 做 cembranoid CeeSs
 提名，走完整闭环”*——并在各门禁处审批。也支持免模型任务控制
@@ -173,6 +185,16 @@ node engine/apps/ariadne-buddy/scripts/run-real-engine-demo.mjs /path/to/Ariadne
 ```
 
 会用真实 pyhmmer/sklearn 引擎跑完整闭环，并打印提名候选及其证据。
+
+`ariadnebuddy tools` 列出智能体可调用的 21 个工具。`ariadnebuddy reset
+--home DIR` 会打印它将删除的全部内容，未加 `--yes` 前不做任何删除；
+`--keep-jobs` 保留研究作业存储。
+
+| 退出码 | 含义 |
+| --- | --- |
+| 0 | 命令正常完成 |
+| 1 | 参数被拒绝、必需检查未通过，或安装不完整 |
+| 130 | `run` / `chat` 期间按 Ctrl+C 中断 |
 
 ## <img src="./docs/images/icons/book.svg" width="22" height="22" alt="" align="top"> 文档
 
@@ -198,7 +220,9 @@ README 保持对称。界面自身同时提供两种语言，并跟随宿主系�
 
 一切由本地 `npm run check` 把关——lint、类型检查、覆盖率门禁测试、Python
 适配器套件、打包、桌面启动、TUI 回归，以及 MCP / 研究 / Web 冒烟；研究冒烟
-驱动整个闭环直至验证交接。
+驱动整个闭环直至验证交接。另有四项契约检查运行在 `npm run check:repo` 中：
+仓库门禁本身、固定品牌字面量并解析全部令牌的主题契约、校验文案键一致性与
+记录台结构钩子的 desk 契约，以及对生成物 Web UI 的上游遗留扫描。
 
 ## <img src="./docs/images/icons/paper.svg" width="22" height="22" alt="" align="top"> 引用
 

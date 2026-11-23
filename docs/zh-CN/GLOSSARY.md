@@ -94,7 +94,23 @@
 | `NOM-007` | 告警 | 缺少最近参考 |
 | `NOM-008` | 致命 | 提名报告没有候选 |
 
+## 命令行词汇
+
+| 术语 | 含义 |
+| --- | --- |
+| `--quiet` | `run` 的输出模式：stdout 只保留助手文本，进度走 stderr |
+| `--json` | `run` 的输出模式：stdout 输出单个结构化 JSON 信封 |
+| `--probe` | `doctor` 对已配置的 Ariadne 后端运行 `health --json` |
+| `--probe-model` | `doctor` 对模型提供方做最小往返；未加时报告为 skipped |
+| `--no-telemetry` | 全局开关，为 `run`、`chat`、`web` 设置 `KIMI_DISABLE_TELEMETRY=1` |
+| `config show` | 打印生效的提供方、模型、后端、技能目录与 MCP 注册情况 |
+| `reset` | 打印删除计划；未加 `--yes` 前不做任何删除 |
+| `--keep-jobs` | `reset` 保留研究作业存储目录 |
+| `caller-declared` | 提交者声明：附书面理由记录的决策，不主张存在独立人工审批 |
+| `conditional_nomination` | 经显式 `proceed_without_esm` 豁免后，仅由 HMM 与特征空间证据支撑的提名 |
+| `proceed_without_esm` | 豁免 ESM2 语义打分的回应，使闭环可在无 torch/transformers 时运行 |
+
 ## 相关
 
 - [科学工作流纪律](../SCIENTIFIC_WORKFLOWS.md) · [示例（英文）](../EXAMPLES.md)
-- [研究任务](../RESEARCH_TASKS.md) · [键盘操作（英文）](../KEYBOARD.md)
+- [研究任务](../RESEARCH_TASKS.md) · [键盘操作（英文）](../KEYBOARD.md) · [常见问题（英文）](../FAQ.md)

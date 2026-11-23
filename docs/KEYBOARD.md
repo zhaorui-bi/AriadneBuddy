@@ -30,6 +30,10 @@ accelerators rather than an AriadneBuddy-specific binding:
 There are no global shortcuts: nothing is registered outside the application window, and
 the desk page is a web surface with no renderer-level key interception.
 
+The link context menu — 在浏览器中打开链接 · 复制链接地址 — and the tray menu — 显示
+AriadneBuddy · 重启引擎 · 退出 AriadneBuddy — declare no accelerators either; the tray's
+重启引擎 is the same handler as the File-menu item above.
+
 ## Research Desk
 
 The Desk is the research-task surface opened from the session list. Its bindings are
@@ -93,6 +97,27 @@ TUI bundle not built yet — run `npm run build:tui` in the AriadneBuddy repo on
 ```
 
 and then opens the plain REPL instead. Build it once with `npm run build:tui`.
+
+### Help, exit codes, and telemetry
+
+Every command takes `--help` — `ariadnebuddy --help` for the overview,
+`ariadnebuddy research --help` for the research actions, and so on. The commands are
+`tui`, `run`, `chat`, `web`, `doctor`, `onboard`, `research`, `reset`, `config show`,
+`tools`, and `info`; `--version` prints the version.
+
+| Status | Meaning |
+| --- | --- |
+| `0` | the command completed |
+| `1` | arguments were rejected, a required check failed, or setup is incomplete |
+| `130` | interrupted with `Ctrl` + `C` during `run` or `chat` |
+
+The global `--no-telemetry` flag sets `KIMI_DISABLE_TELEMETRY=1` for the `run`, `chat`,
+and `web` harness. It is parsed before the command, so it works with any of them.
+
+`run` adds two script-friendly output flags: `--quiet` keeps stdout to assistant text and
+sends progress to stderr, and `--json` prints one structured JSON envelope on stdout and
+implies `--quiet`. `web` has no key bindings of its own; pass `--no-open` to keep it from
+launching a browser.
 
 ## Related
 

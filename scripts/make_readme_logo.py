@@ -1,0 +1,174 @@
+"""Compose the high-definition Ariadne lockup shown in the READMEs.
+
+The wordmark and tagline are emitted as exact glyph outlines from the brand
+serif (Cormorant Garamond Variable) rather than as a bitmap trace, so the
+lockup stays sharp at any size and in any renderer. The goddess mark is the
+clean single-path vector in build/logo.svg, which every branded surface
+already ships.
+
+Run:  python3 scripts/make_readme_logo.py
+"""
+
+import io
+import os
+import re
+import sys
+import xml.etree.ElementTree as ET
+
+from fontTools.misc.transform import Transform
+from fontTools.pens.svgPathPen import SVGPathPen
+from fontTools.pens.transformPen import TransformPen
+from fontTools.ttLib import TTFont
+from fontTools.varLib.instancer import instantiateVariableFont
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(HERE)
+FONT_DIR = os.path.join(
+    ROOT, 'engine', 'apps', 'ariadne-buddy', 'web-ui', 'assets', 'ariadne-fonts',
+    'cormorant-garamond',
+)
+FONT_FILE = os.path.join(FONT_DIR, 'cormorant-garamond-latin-wght-normal.woff2')
+MARK_FILE = os.path.join(ROOT, 'build', 'logo.svg')
+OUT_FILE = os.path.join(ROOT, 'docs', 'logo.svg')
+
+WORDMARK = 'ARIADNE'
+TAGLINE = 'Terpene Synthase Discovery Platform'
+
+# Classical palette: the ink of the appearance layer, one step off pure black
+# and white so the lockup reads as engraved rather than printed.
+INK_LIGHT = '#141414'
+INK_DARK = '#f2f2f2'
+
+MARK_BOX = 236.0
+MARK_X = 14.0
+MARK_Y = 32.0
+TEXT_X = 286.0
+WORDMARK_SIZE = 96.0
+WORDMARK_WEIGHT = 600
+WORDMARK_BASELINE = 150.0
+RULE_GAP = 20.0
+RULE_WIDTH = 2.0
+TAGLINE_SIZE = 26.0
+TAGLINE_WEIGHT = 500
+TAGLINE_TRACKING = 3.0
+TAGLINE_BASELINE = 214.0
+
+
+def load_face(weight):
+    """Return (glyph set, hmtx, cmap, units per em) at the requested weight."""
+    font = TTFont(io.BytesIO(open(FONT_FILE, 'rb').read()))
+    if 'fvar' in font:
+        font = instantiateVariableFont(font, {'wght': weight}, inplace=True, updateFontNames=False)
+    return font.getGlyphSet(), font['hmtx'], font.getBestCmap(), font['head'].unitsPerEm
+
+
+def outline_pen():
+    """A path pen that rounds to one decimal in font units.
+
+    One unit is a thousandth of an em, so a tenth of a unit is far below a
+    hundredth of a pixel at the sizes this lockup is drawn at — the rounding
+    is invisible and roughly halves the file.
+    """
+    return SVGPathPen(None, ntos=lambda value: f'{value:.1f}')
+
+
+def text_path(text, weight, tracking=0.0):
+    """Emit one SVG path for text plus its advance width in font units.
+
+    ``tracking`` is extra letter spacing in font units, so it scales with the
+    face exactly as the glyph advances do. Each glyph is drawn through a
+    TransformPen so its own advance is baked into the shared path — SVGPathPen
+    alone would stack every glyph on the origin.
+    """
+    glyphs, hmtx, cmap, _ = load_face(weight)
+    pen = outline_pen()
+    x = 0.0
+    for character in text:
+        glyph = cmap[32] if character == ' ' else cmap[ord(character)]
+        glyphs[glyph].draw(TransformPen(pen, Transform().translate(x, 0)))
+        x += hmtx[glyph][0] + tracking
+    return pen.getCommands(), x
+
+
+def to_px(font_units, size):
+    """Convert an advance in font units to pixels at the given font size."""
+    return font_units * size / 1000.0
+
+
+def mark_geometry():
+    """Read the mark's viewBox and single path out of build/logo.svg."""
+    root = ET.parse(MARK_FILE).getroot()
+    view_box = [float(value) for value in root.get('viewBox').split()]
+    path = root.find('{http://www.w3.org/2000/svg}path')
+    if path is None:
+        sys.exit(f'no path element in {MARK_FILE}')
+    return view_box, path.get('d')
+
+
+def main():
+    if not os.path.isfile(FONT_FILE):
+        sys.exit(f'brand font missing: {FONT_FILE} — run npm run sync:web first')
+
+    # Tracking is authored in pixels at the tagline's own size, then converted
+    # to font units so the emitted advance is directly scalable.
+    tagline_tracking = TAGLINE_TRACKING / TAGLINE_SIZE * 1000.0
+    wordmark_d, wordmark_units = text_path(WORDMARK, WORDMARK_WEIGHT)
+    tagline_d, tagline_units = text_path(TAGLINE, TAGLINE_WEIGHT, tagline_tracking)
+    wordmark_width = to_px(wordmark_units, WORDMARK_SIZE)
+    tagline_width = to_px(tagline_units, TAGLINE_SIZE)
+
+    view_box, mark_d = mark_geometry()
+    _, _, mark_width, mark_height = view_box
+    mark_scale = MARK_BOX / max(mark_width, mark_height)
+    mark_offset_x = MARK_X + (MARK_BOX - mark_width * mark_scale) / 2
+    mark_offset_y = MARK_Y + (MARK_BOX - mark_height * mark_scale) / 2
+
+    # The lockup is as wide as its widest text run, so nothing is ever clipped.
+    content_width = max(wordmark_width, tagline_width)
+    total_width = TEXT_X + content_width + 24
+    total_height = MARK_Y + MARK_BOX + 24
+
+    rule_left = TEXT_X
+    rule_right = TEXT_X + content_width
+    rule_y = WORDMARK_BASELINE + RULE_GAP
+
+    svg = f'''<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated by scripts/make_readme_logo.py — the goddess mark from
+     build/logo.svg, the wordmark and tagline as exact Cormorant Garamond
+     outlines. Glyph outlines are emitted in the font's own coordinate system
+     (y up), so each text group flips on y to land upright in SVG space.
+     Do not edit by hand. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="{total_width:.0f}" height="{total_height:.0f}" viewBox="0 0 {total_width:.0f} {total_height:.0f}" role="img" aria-labelledby="lockup-title">
+  <title id="lockup-title">Ariadne — Terpene Synthase Discovery Platform</title>
+  <style>
+    .ink {{ fill: {INK_LIGHT}; }}
+    @media (prefers-color-scheme: dark) {{
+      .ink {{ fill: {INK_DARK}; }}
+    }}
+  </style>
+  <g transform="translate({mark_offset_x:.2f},{mark_offset_y:.2f}) scale({mark_scale:.5f})">
+    <path class="ink" d="{mark_d}"/>
+  </g>
+  <g transform="translate({TEXT_X:.2f},{WORDMARK_BASELINE:.2f}) scale({WORDMARK_SIZE / 1000:.4f},{-WORDMARK_SIZE / 1000:.4f})">
+    <path class="ink" d="{wordmark_d}"/>
+  </g>
+  <g class="ink">
+    <rect x="{rule_left:.2f}" y="{rule_y:.2f}" width="{content_width:.2f}" height="{RULE_WIDTH / 2:.2f}"/>
+    <rect x="{rule_left:.2f}" y="{rule_y + RULE_WIDTH:.2f}" width="{content_width:.2f}" height="{RULE_WIDTH / 2:.2f}"/>
+  </g>
+  <g transform="translate({TEXT_X:.2f},{TAGLINE_BASELINE:.2f}) scale({TAGLINE_SIZE / 1000:.4f},{-TAGLINE_SIZE / 1000:.4f})">
+    <path class="ink" d="{tagline_d}"/>
+  </g>
+</svg>
+'''
+    with open(OUT_FILE, 'w', encoding='utf-8') as handle:
+        handle.write(svg)
+    print(
+        f'logo lockup written to {os.path.relpath(OUT_FILE, ROOT)} '
+        f'({total_width:.0f}x{total_height:.0f}, wordmark {wordmark_width:.0f}u, '
+        f'tagline {tagline_width:.0f}u)',
+    )
+
+
+if __name__ == '__main__':
+    main()

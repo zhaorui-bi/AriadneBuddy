@@ -96,7 +96,23 @@ reaches the human.
 | `NOM-007` | warning | nearest reference missing |
 | `NOM-008` | critical | the nomination report has no candidates |
 
+## Command-line vocabulary
+
+| Term | Meaning |
+| --- | --- |
+| `--quiet` | `run` output mode: assistant text alone on stdout, progress on stderr |
+| `--json` | `run` output mode: one structured JSON envelope on stdout |
+| `--probe` | `doctor` runs `health --json` against the configured Ariadne backend |
+| `--probe-model` | `doctor` makes a minimal round-trip against the model provider; reports as skipped when absent |
+| `--no-telemetry` | global flag setting `KIMI_DISABLE_TELEMETRY=1` for `run`, `chat`, and `web` |
+| `config show` | prints the effective provider, model, backend, skill directories, and MCP registration |
+| `reset` | prints a deletion plan; removes nothing until `--yes` is passed |
+| `--keep-jobs` | `reset` preserves the research job storage directory |
+| `caller-declared` | a decision recorded with a written reason and no independent human approval asserted |
+| `conditional_nomination` | nomination carried by HMM and feature-space evidence alone, after an explicit `proceed_without_esm` waiver |
+| `proceed_without_esm` | the response that waives ESM2 semantic scoring and opens the loop to run without torch/transformers |
+
 ## Related
 
 - [Scientific workflow discipline](./SCIENTIFIC_WORKFLOWS.md) · [Examples](./EXAMPLES.md)
-- [Research tasks](./RESEARCH_TASKS.md) · [Keyboard](./KEYBOARD.md)
+- [Research tasks](./RESEARCH_TASKS.md) · [Keyboard](./KEYBOARD.md) · [FAQ](./FAQ.md)

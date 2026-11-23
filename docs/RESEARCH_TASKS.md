@@ -15,22 +15,82 @@ readiness → literature → hypothesis → (approve|revise) → pathway
   → experiment → validation → (iterate ≤ 4 | conclude) → handoff (ready)
 ```
 
-Statuses: `open`, `running`, `waiting`, `ready`, `cancelled`. Every mutating
-call carries `expectedVersion` (optimistic concurrency); every transition is
-appended to a bounded event log.
+Stages: `readiness`, `literature`, `hypothesis`, `pathway`, `discovery`,
+`filtering`, `nomination`, `audit`, `experiment`, `validation`, `iteration`,
+`handoff`.
 
-## Responses to attention items
+Statuses: `open`, `running`, `waiting`, `ready`, `cancelled`.
+
+An `afpk-ks` request runs a different path: `readiness` → one three-profile KS
+screen → shortlist review → `handoff`.
+
+## State machine
+
+| Status | Meaning |
+| --- | --- |
+| `open` | the task is registered and waiting for the next `advance`, artifact, or decision |
+| `running` | a durable engine job is in flight |
+| `waiting` | an attention item is open; the controller will not advance past it |
+| `ready` | the handoff was verified and frozen |
+| `cancelled` | cancellation was confirmed; the task retains its records and cannot resume |
+
+Every mutating call carries `expectedVersion` (optimistic concurrency) and
+every transition is appended to a bounded event log. `advance` performs one
+step: it reconciles the current durable assignment, then either opens a
+stage-input attention item, launches the next engine job, or stops at an open
+attention item. A closed task (`ready` or `cancelled`) accepts no responses.
+
+## Attention items and the waitingReason vocabulary
+
+An attention item is an explicit request for a decision. It carries an `id`, a
+`kind`, the `stage` it belongs to, a `message`, and the `allowedActions` that
+can resolve it. `waitingReason` is the `kind` of the first open item, and the
+Research Desk renders it with these labels:
+
+| `waitingReason` | Desk label | Raised when | Allowed responses |
+| --- | --- | --- | --- |
+| `stage_input` | Stage input pending | a knowledge stage needs its artifact | `submit_stage`, `amend_request` |
+| `stage_review` | Hypothesis review pending | a hypothesis artifact was deposited | `approve`, `revise` |
+| `nomination_review` | Shortlist review pending | the audit passed for a nominated shortlist | `approve`, `amend_request` |
+| `afpk_nomination_review` | Shortlist review pending | an `afpk-ks` screen produced a putative shortlist | `approve`, `revise`, `amend_request` |
+| `afpk_empty_shortlist` | No AFPK nominations | an `afpk-ks` screen produced no candidates | `amend_request` |
+| `afpk_revision` | Request revision pending | an AFPK shortlist review was revised | `amend_request` |
+| `iteration_decision` | Iteration decision pending | validation records are frozen | `iterate` (before round 4), `conclude` |
+| `esm_unavailable` | ESM scoring decision pending | ESM2 scoring is unavailable at nomination | `proceed_without_esm`, `amend_request` |
+| `scientific_review` | Scientific review pending | the audit returned `warn` or `fail` | `amend_request` |
+| `environment_readiness` | Runtime setup pending | backend health or identity could not be confirmed | `retry` |
+| `configuration_drift` | Configuration changed | the backend command, revision, or scientific settings changed after the mandate froze | none |
+| `preflight_failure` | Input check failed | the input preflight failed before any launch | `amend_request` |
+| `execution_failure` | Job failed | an engine job failed | `retry`, `amend_request` |
+| `execution_cancelled` | Job stopped | an engine job was cancelled | `retry`, `amend_request` |
+| `execution_unknown` | Job state unconfirmed | a job's terminal state or its cancellation could not be confirmed | none |
+| `malformed_result` | Result review pending | a job result could not be verified | `amend_request` |
+| `integrity` | Integrity check pending | a frozen artifact no longer matches the verified run | `amend_request`, or none when a dependency check failed |
+| `budget_exhausted` | Job budget exhausted | the frozen job budget is used | none |
+
+An attention item with no allowed response cannot be cleared from inside the
+task: read its message, preserve the run, and start a new task for the changed
+configuration or expanded scope.
+
+## Responses
+
+`ariadne_research_respond` records one caller-declared decision against one
+attention item. The action must be in that item's `allowedActions`.
 
 | Action | Applies to | Effect |
 | --- | --- | --- |
 | `submit_stage` | `stage_input` | freezes the stage artifact (schema-validated) and advances |
-| `approve` | `stage_review`, `nomination_review` | passes a human gate |
-| `revise` | `stage_review` | reopens the hypothesis stage for a new artifact |
-| `amend_request` | most gates | freezes a new request revision; knowledge loop restarts at literature |
+| `approve` | `stage_review`, `nomination_review`, `afpk_nomination_review` | passes a human gate |
+| `revise` | `stage_review`, `afpk_nomination_review` | reopens the hypothesis stage, or opens `afpk_revision` |
+| `amend_request` | most gates | freezes a new request revision; the loop restarts at `literature` (`readiness` for AFPK) |
 | `proceed_without_esm` | `esm_unavailable` | explicit waiver; outcome becomes `conditional_nomination` |
 | `iterate` | `iteration_decision` | new hypothesis round with validation learnings (≤ 4) |
 | `conclude` | `iteration_decision` | verifies lineage and freezes the validated handoff |
-| `retry` | `execution_failure`, `environment_readiness` | re-runs the stage within budget |
+| `retry` | `execution_failure`, `execution_cancelled`, `environment_readiness` | re-runs the stage within budget |
+
+Every response requires a `reason` and is written to the event log as
+`<action>: <reason> (caller-declared; no independent human approval is
+asserted)`.
 
 ## Guarantees
 
@@ -43,12 +103,21 @@ appended to a bounded event log.
   re-read.
 - **Budget**: default 6 engine jobs (max 16); the loop needs 4 (discovery,
   filtering, nomination, audit) — retries draw from the same pool.
-- **Honest outcomes**: `scientificOutcome.status` ∈ pending / blocked /
-  conditional_nomination / review_required / validated / cancelled, kept
-  strictly separate from execution success. Audit warnings and failures can
-  never be waived into `ready`. `validated` denotes a reviewed validation
-  record at handoff. Individual experimental outcomes remain in `records[]`
-  and can be supported, refuted, or inconclusive.
+- **Caller-declared decisions**: a response records who decided and why. It is
+  not trusted human sign-off, and it cannot turn an audit warning or failure
+  into a ready result.
+- **Audit failures block handoff**: readiness requires `auditStatus` of `pass`
+  over the verified nomination output, a completed discovery → filtering →
+  nomination → audit lineage for the current revision, and frozen `experiment`
+  and `validation` artifacts. A `warn` or `fail` audit opens
+  `scientific_review`, whose only response is `amend_request`. Re-verification
+  of a ready task that no longer matches moves it to `review_required`.
+- **Version conflict**: a mutation whose `expectedVersion` does not match the
+  stored version is rejected. The Research Desk answers 409; the CLI reports
+  `Research version conflict: expected N, current M. Read the task before
+  retrying.` and exits 1. Job records, artifacts, and decisions are unchanged.
+- **Bounded history**: the event log keeps the most recent 128 events and
+  reports `eventsTruncated`; request revisions are capped at 16.
 
 ## Research sessions
 
@@ -112,9 +181,26 @@ ariadnebuddy research create  --input create.json          # freeze the mandate
 ariadnebuddy research status  --id research_<hash>          # read state
 ariadnebuddy research list                                  # recent tasks
 ariadnebuddy research advance --id research_<hash>          # reconcile + advance one step
+ariadnebuddy research advance --id research_<hash> --expected-version 3
 ariadnebuddy research respond --input respond.json
-ariadnebuddy research cancel --input cancel.json
+ariadnebuddy research cancel  --input cancel.json
 ```
 
+`create`, `respond`, and `cancel` read a JSON object validated against the
+matching `ariadne_research_*` schema; `status` and `advance` take `--id ID`
+(and `advance` optionally `--expected-version N`) instead. Every command also
+accepts `--home DIR`. A relative `--input` path resolves from
+`ARIADNE_WORKDIR`, must be a regular file (no symbolic links), and may be at
+most 64 KiB. Creating a task starts no backend work. See
+[Examples](./EXAMPLES.md) for the frozen artifact shapes and [Quick start](./QUICKSTART.md) for the worked commands.
+
 Artifacts live under `<jobs-root>/research/<id>/artifacts/` (request
-revisions, frozen stage artifacts, per-stage outputs, engine side files).
+revisions, frozen stage artifacts, per-stage outputs, engine side files). Job
+records and logs live under `ARIADNE_JOBS_DIR` (default
+`<workdir>/ariadne-jobs`).
+
+## Related
+
+- [Scientific workflow discipline](./SCIENTIFIC_WORKFLOWS.md) · [Examples](./EXAMPLES.md)
+- [Glossary](./GLOSSARY.md) · [Quick start](./QUICKSTART.md)
+- [Molluscan KS case](../examples/cases/AFPK_MOLLUSC.md)

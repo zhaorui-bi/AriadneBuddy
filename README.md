@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./docs/logo.svg" alt="Ariadne — the official full logo, goddess mark and wordmark" width="440">
+  <img src="./docs/logo.svg" alt="Ariadne — the official full logo, goddess mark and wordmark" width="560">
 </p>
 
 <p align="center">
@@ -64,6 +64,11 @@ validation interpretation → iterative optimization** — runs through a CLI, a
 full terminal TUI, a local web app, and an Electron desktop app. Every interface
 shares one appearance layer: a parchment and ink scale, four pigments, and
 engraved Greek-key ornament. [Design](./docs/DESIGN.md) is the token reference.
+
+Beyond the TPS/CeeSs loop the workbench also runs the molluscan KS three-model
+screen, calls the original AFPK-finder, and places published evidence beside this
+run's classification for shortlist review — see the
+[molluscan case](./examples/cases/AFPK_MOLLUSC.md).
 
 ## <img src="./docs/images/icons/ring.svg" width="22" height="22" alt="" align="top"> The closed loop
 
@@ -148,10 +153,12 @@ screen, a relaxed exploratory screen, and a pathway-first TPS inventory.
 
 ## <img src="./docs/images/icons/install.svg" width="22" height="22" alt="" align="top"> Install
 
-**Prerequisites** — Node.js ≥ 24.15, npm, pnpm 12; Python 3.10+ with an
+**Prerequisites** — Node.js ≥ 24.15, npm (`packageManager` declares npm@12.0.2), pnpm 12
+(a devDependency); Python 3.10+ with an
 [ariadne-tps](https://github.com/zhaorui-bi/Ariadne) checkout (`pyhmmer,
-pyrodigal, scikit-learn, openpyxl`; a checkout-local `.venv` is detected
-automatically); optionally `pip install ariadne-tps[esm]` for ESM2 scoring;
+pyrodigal, scikit-learn, openpyxl`; the interpreter resolves from `ARIADNE_PYTHON`
+first, then a checkout-local `.venv` or `venv`, then `python3`/`python` on `PATH`);
+optionally `pip install ariadne-tps[esm]` for ESM2 scoring;
 any OpenAI-compatible model API key (no login flows).
 
 ```bash
@@ -159,17 +166,29 @@ git clone https://github.com/zhaorui-bi/AriadneBuddy && cd AriadneBuddy
 npm run setup                                          # install + build + branded web UI
 ./bin/ariadnebuddy onboard --ariadne-repo /path/to/Ariadne \
                            --provider zai --api-key-env ZAI_API_KEY
-./bin/ariadnebuddy doctor --probe                      # one-shot health check
+./bin/ariadnebuddy doctor --probe --probe-model        # one-shot health check
 ```
+
+Onboarding runs six numbered steps and refuses to finish silently: if no default
+model is configured it prints the exact corrective
+`ariadnebuddy onboard --provider <id> --api-key-env <VAR>` command and exits non-zero.
+`./bin/ariadnebuddy config show` prints the effective provider, model, backend, skill
+directories, and MCP registration without running the full doctor.
 
 ## <img src="./docs/images/icons/flask.svg" width="22" height="22" alt="" align="top"> Use
 
 ```bash
 ./bin/ariadnebuddy web        # Greek/Roman web workbench → http://127.0.0.1:58627
-./bin/ariadnebuddy            # full terminal TUI
+./bin/ariadnebuddy            # full terminal TUI (same as `ariadnebuddy tui`)
 ./bin/ariadnebuddy chat       # lightweight REPL
+./bin/ariadnebuddy run "<prompt>"   # one-shot: session, one prompt, stream, exit
 npm start                     # Electron desktop app
 ```
+
+`run` is script-friendly: `--quiet` puts assistant text alone on stdout with progress
+on stderr, and `--json` emits one structured envelope. `--model`, `--workdir`, and
+`--permission auto|manual|yolo` override the configured defaults. A global
+`--no-telemetry` disables telemetry for `run`, `chat`, and `web`.
 
 Then just ask — *“用 Ariadne 引擎对 input/all_tps.fasta 做 cembranoid CeeSs
 提名，走完整闭环”* — and approve the gates. Model-free task control also
@@ -181,6 +200,16 @@ node engine/apps/ariadne-buddy/scripts/run-real-engine-demo.mjs /path/to/Ariadne
 
 drives the entire loop against the real pyhmmer/sklearn engines and prints
 the nominated candidates with their evidence.
+
+`ariadnebuddy tools` lists the 21 tools the agent can call. `ariadnebuddy reset
+--home DIR` prints exactly what it would delete and removes nothing until `--yes`
+is passed; `--keep-jobs` preserves research job storage.
+
+| Exit code | Meaning |
+| --- | --- |
+| 0 | the command completed |
+| 1 | arguments were rejected, a required check failed, or setup is incomplete |
+| 130 | interrupted with Ctrl+C during `run` / `chat` |
 
 ## <img src="./docs/images/icons/book.svg" width="22" height="22" alt="" align="top"> Documentation
 
@@ -211,7 +240,11 @@ The interface itself ships both languages and follows the language of the host s
 Everything is gated locally by `npm run check` — lint, typecheck,
 coverage-threshold tests, the Python adapter suite, packaging, desktop
 startup, TUI regression, and the MCP / research / web smokes; the research
-smoke drives the entire loop to a validated handoff.
+smoke drives the entire loop to a validated handoff. Four contract checks run
+inside `npm run check:repo`: the repository gate itself, a theme contract that
+pins the brand literals and resolves every token, a Research Desk contract that
+checks copy-key parity and the desk's structural hooks, and a scan of the
+generated Web UI for upstream leftovers.
 
 ## <img src="./docs/images/icons/paper.svg" width="22" height="22" alt="" align="top"> Citation
 

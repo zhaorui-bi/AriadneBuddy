@@ -48,9 +48,9 @@ const COMMAND_USAGE: Readonly<Record<string, string>> = {
     --help                print this help
 
   Examples:
-    ariadnebuddy run "summarize the arsenic case"
+    ariadnebuddy run "summarize the coral cembrene literature"
     ariadnebuddy run --quiet --json "nominate cembrene-class TPS candidates"
-    ariadnebuddy run --model zai/glm-4.6 --workdir ~/aqua-work "review this draft"
+    ariadnebuddy run --model zai/glm-4.6 --workdir ~/ceess-work "review this draft"
 
 ${EXIT_CODES}`,
   chat: `ariadnebuddy chat [options]
@@ -65,7 +65,7 @@ ${EXIT_CODES}`,
 
   Examples:
     ariadnebuddy chat
-    ariadnebuddy chat --home ~/.ariadne --workdir ~/aqua-work
+    ariadnebuddy chat --home ~/.ariadne --workdir ~/ceess-work
 
 ${EXIT_CODES}`,
   tui: `ariadnebuddy tui
