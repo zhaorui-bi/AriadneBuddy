@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <strong>Turn a research question into a validated shortlist of cembrene synthase candidates.</strong><br>
-  <em>The multi-agent companion to the Ariadne engines — six expert agents, three deterministic engines, one auditable loop, no black-box endpoint.</em>
+  <strong>A multi-agent workspace for animal natural product discovery.</strong><br>
+  <em>Six expert roles and three deterministic engines support evidence-backed candidate nomination, researcher review, and experimental validation.</em>
 </p>
 
 <p align="center">
@@ -13,6 +13,7 @@
 
 <p align="center">
   <a href="./README.zh-CN.md">中文</a> &nbsp;·&nbsp;
+  <a href="#research-framework">Framework</a> &nbsp;·&nbsp;
   <a href="#citation">Citation</a> &nbsp;·&nbsp;
   <a href="./docs/QUICKSTART.md">Docs</a>
 </p>
@@ -38,6 +39,18 @@
 <p align="center"><sub>Beta · v0.1.0-beta.1</sub></p>
 
 ---
+
+## Research framework
+
+<p align="center">
+  <a href="./docs/images/ariadnebuddy-framework.png"><img src="./docs/images/ariadnebuddy-framework.png" alt="AriadneBuddy framework showing research coordination in Chat, Plugins that can bundle Skills and MCP servers, deterministic computation, researcher approval, and an experimental validation loop with an auditable handoff." width="920"></a>
+</p>
+
+Chat coordinates the expert roles and organizes the evidence for each stage.
+Plugins can bundle reusable Skills and MCP tool connections. The deterministic
+engines generate candidate evidence for researchers to review. Experimental
+results inform an explicit decision to revise the hypothesis or conclude with a
+verified handoff. [Architecture](./docs/ARCHITECTURE.md)
 
 ## <img src="./docs/images/icons/discovery.svg" width="22" height="22" alt="" align="top"> What this is
 
@@ -71,10 +84,6 @@ run's classification for shortlist review — see the
 [molluscan case](./examples/cases/AFPK_MOLLUSC.md).
 
 ## <img src="./docs/images/icons/ring.svg" width="22" height="22" alt="" align="top"> The closed loop
-
-<p align="center">
-  <img src="./docs/images/loop.svg" alt="The closed research loop: fluted-column stages around a Greek-key border, laurel branches at the three human gates, and Ariadne&#39;s thread carrying the iterate decision from validation back to hypothesis" width="720">
-</p>
 
 | Stage | Owner | What happens | Frozen artifact |
 | --- | --- | --- | --- |

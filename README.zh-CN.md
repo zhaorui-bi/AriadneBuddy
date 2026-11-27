@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <strong>把一个研究问题，变成一份经过验证的 cembrene 合酶候选名单。</strong><br>
-  <em>Ariadne 引擎的多智能体伴侣——六位专家智能体、三台确定性引擎、一条可审计的闭环，没有黑箱终点。</em>
+  <strong>面向动物天然产物发现的多智能体科研工作台。</strong><br>
+  <em>六种专家角色与三个确定性引擎，支持有证据支撑的候选提名、人工审核和实验验证。</em>
 </p>
 
 <p align="center">
@@ -13,6 +13,7 @@
 
 <p align="center">
   <a href="./README.md">English</a> &nbsp;·&nbsp;
+  <a href="#研究框架">研究框架</a> &nbsp;·&nbsp;
   <a href="#引用">引用</a> &nbsp;·&nbsp;
   <a href="./docs/zh-CN/QUICKSTART.md">文档</a>
 </p>
@@ -38,6 +39,16 @@
 <p align="center"><sub>Beta 候选版 · v0.1.0-beta.1</sub></p>
 
 ---
+
+## 研究框架
+
+<p align="center">
+  <a href="./docs/images/ariadnebuddy-framework.png"><img src="./docs/images/ariadnebuddy-framework.png" alt="AriadneBuddy 研究框架。Chat 协调研究，插件可打包 Skills 和 MCP 服务，确定性引擎产出证据，由研究者审核并通过实验验证决定迭代或交接。" width="920"></a>
+</p>
+
+Chat 协调专家角色，组织各阶段的证据。插件可以打包可复用的 Skills 和 MCP 工具连接。
+确定性引擎产出候选证据，交由研究者审核。研究者根据实验结果决定修订假说，或结题并完成
+经校验的交接。 [架构说明](./docs/ARCHITECTURE.md)
 
 ## <img src="./docs/images/icons/discovery.svg" width="22" height="22" alt="" align="top"> 这是什么
 
@@ -67,10 +78,6 @@
 [软体动物案例](./examples/cases/AFPK_MOLLUSC.md)。
 
 ## <img src="./docs/images/icons/ring.svg" width="22" height="22" alt="" align="top"> 科学闭环
-
-<p align="center">
-  <img src="./docs/images/loop.svg" alt="闭环研究回路：希腊回纹边框内的凹槽柱阶段、三处人工门禁的月桂枝，以及承载迭代决策从验证解读回到假说生成的阿里阿德涅之线" width="720">
-</p>
 
 | 阶段 | 归属 | 做什么 | 冻结产物 |
 | --- | --- | --- | --- |
